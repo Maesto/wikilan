@@ -43,13 +43,34 @@ class syntax_plugin_wikilan_calendar extends SyntaxPlugin
             return true;
         }
 
-        // group by day; undated events land in a '' bucket at the end
+        // group by day; events crossing midnight get a continuation segment in
+        // every day column they touch; undated events land in a '' bucket
         $days = [];
         foreach ($events as $neutral => $ev) {
-            $day = $ev['start_ts'] ? date('Y-m-d', $ev['start_ts']) : '';
-            $days[$day][$neutral] = $ev;
+            if (!$ev['start_ts']) {
+                $days[''][] = ['neutral' => $neutral, 'ev' => $ev,
+                    'seg_start' => null, 'seg_end' => null, 'cont' => false];
+                continue;
+            }
+            $end = max((int)($ev['end_ts'] ?? $ev['start_ts']), $ev['start_ts']);
+            $cursor = $ev['start_ts'];
+            do {
+                $midnight = strtotime(date('Y-m-d', $cursor) . ' 00:00 +1 day');
+                $days[date('Y-m-d', $cursor)][] = [
+                    'neutral' => $neutral,
+                    'ev' => $ev,
+                    'seg_start' => $cursor,
+                    'seg_end' => min($end, $midnight),
+                    'cont' => $cursor !== $ev['start_ts'],
+                ];
+                $cursor = $midnight;
+            } while ($end > $midnight);
         }
         ksort($days);
+        foreach ($days as &$list) {
+            usort($list, static fn($a, $b) => ($a['seg_start'] ?? 0) <=> ($b['seg_start'] ?? 0));
+        }
+        unset($list);
         if (isset($days[''])) {
             $undated = $days[''];
             unset($days['']);
@@ -67,19 +88,29 @@ class syntax_plugin_wikilan_calendar extends SyntaxPlugin
             }
             $renderer->doc .= '<div class="wl-cal-day">';
             $renderer->doc .= '<h3 class="wl-cal-dayhead">' . $head . '</h3>';
-            foreach ($dayEvents as $neutral => $ev) {
+            foreach ($dayEvents as $seg) {
+                $neutral = $seg['neutral'];
+                $ev = $seg['ev'];
                 $d = $ev['data'] ?? [];
-                $running = $ev['start_ts'] && $ev['end_ts']
-                    && $now >= $ev['start_ts'] && $now <= $ev['end_ts'];
+                // highlight the segment that is live right now (an event past
+                // midnight lights up in the column of the current day)
+                $running = $seg['seg_start'] !== null
+                    && $now >= $seg['seg_start'] && $now <= $seg['seg_end'];
                 $cls = 'wl-cal-event';
                 if ($running) $cls .= ' wl-cal-running';
+                if ($seg['cont']) $cls .= ' wl-cal-cont';
                 if (!empty($d['category'])) {
                     $cls .= ' wl-cat-' . preg_replace('/[^a-z0-9]+/', '-', strtolower($d['category']));
                 }
-                $signups = $wl->signups($neutral);
 
                 $renderer->doc .= '<div class="' . $cls . '">';
-                if ($ev['start_ts']) {
+                if ($seg['cont']) {
+                    // continuation: '…–02:00' on the closing day, '…' on full
+                    // in-between days of longer spans
+                    $renderer->doc .= '<span class="wl-cal-time">…'
+                        . ($seg['seg_end'] === $ev['end_ts'] ? '–' . date('H:i', $ev['end_ts']) : '')
+                        . '</span>';
+                } elseif ($ev['start_ts']) {
                     $renderer->doc .= '<span class="wl-cal-time">' . date('H:i', $ev['start_ts']);
                     if ($ev['end_ts'] && $ev['end_ts'] > $ev['start_ts']) {
                         $renderer->doc .= '–' . date('H:i', $ev['end_ts']);
@@ -91,6 +122,12 @@ class syntax_plugin_wikilan_calendar extends SyntaxPlugin
                         ? html_wikilink(':' . $ev['page'], $ev['title'])
                         : hsc($ev['title']))
                     . '</span>';
+                if ($seg['cont']) {
+                    // time + title suffice on continuations
+                    $renderer->doc .= '</div>';
+                    continue;
+                }
+                $signups = $wl->signups($neutral);
                 $meta = [];
                 if (!empty($d['host'])) {
                     $meta[] = hsc($wl->getLang('cal_host') . ': ' . $d['host']);
