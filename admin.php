@@ -78,15 +78,22 @@ class admin_plugin_wikilan extends AdminPlugin
                 msg('State updated', 1);
                 break;
 
-            case 'lan_plan':
+            case 'lan_plan': {
                 if (!$isAdmin) break;
+                $plan = cleanID($INPUT->str('plan'));
                 $db->exec(
                     "UPDATE lans SET plan_media = ? WHERE id = ?",
-                    cleanID($INPUT->str('plan')),
+                    $plan,
                     $INPUT->int('lan')
                 );
-                msg('Plan set', 1);
+                if ($plan !== '' && !is_readable(mediaFN($plan))) {
+                    msg("Plan set, but media '$plan' does not exist — "
+                        . 'did you forget the namespace (en:msl:…)?', 2);
+                } else {
+                    msg('Plan set', 1);
+                }
                 break;
+            }
 
             case 'seats_import': {
                 $lan = $this->wl->getLan($INPUT->int('lan'));

@@ -801,6 +801,12 @@ class helper_plugin_wikilan extends Plugin
                     $hot->setAttribute('data-home', $x . ',' . $y);
                     $hot->setAttribute('data-mid', $mid['x'] . ',' . $mid['y']);
                     $hot->setAttribute('data-bpos', $bp['x'] . ',' . $bp['y']);
+                    // the visible label follows the circle: centered under the
+                    // solo midpoint circle, back at its own spot when paired
+                    $node->setAttribute('data-label-for', $seatId);
+                    if (!$buddyOccupied) {
+                        $this->moveLabel($node, $mid['x'] - 10, $mid['y'] + 5.5);
+                    }
                 }
                 if ($buddyOccupied) {
                     $bhot = $doc->createElementNS($svgNs, 'circle');
@@ -824,6 +830,19 @@ class helper_plugin_wikilan extends Plugin
         $root->setAttribute('class', 'wl-plan');
         $root->setAttribute('preserveAspectRatio', 'xMidYMid meet');
         return $doc->saveXML($root);
+    }
+
+    /** Reposition an SVG text label (Inkscape puts x/y on the tspans too) */
+    protected function moveLabel(DOMElement $text, float $x, float $y): void
+    {
+        $text->setAttribute('x', (string)$x);
+        $text->setAttribute('y', (string)$y);
+        foreach ($text->childNodes as $child) {
+            if ($child instanceof DOMElement && $child->localName === 'tspan') {
+                $child->setAttribute('x', (string)$x);
+                $child->setAttribute('y', (string)$y);
+            }
+        }
     }
 
     protected function loadSvg(string $svg): ?DOMDocument

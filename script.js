@@ -358,8 +358,22 @@
                             elm.setAttribute('cx', p[0]);
                             elm.setAttribute('cy', p[1]);
                         }
+                        // the visible label follows the host circle
+                        function setLabel(xy) {
+                            var lbl = bx.querySelector('text[data-label-for="' + s.buddy_of + '"]');
+                            if (!lbl) return;
+                            var p = xy.split(',');
+                            var lx = parseFloat(p[0]) - 10;
+                            var ly = parseFloat(p[1]) + 5.5;
+                            [lbl].concat(Array.prototype.slice.call(lbl.querySelectorAll('tspan')))
+                                .forEach(function (n) {
+                                    n.setAttribute('x', lx);
+                                    n.setAttribute('y', ly);
+                                });
+                        }
                         if (s.user) {
                             setPos(host, host.dataset.home);
+                            setLabel(host.dataset.home);
                             if (!bel) {
                                 bel = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
                                 setPos(bel, host.dataset.bpos);
@@ -372,6 +386,7 @@
                             }
                         } else {
                             setPos(host, host.dataset.mid);
+                            setLabel(host.dataset.mid);
                             if (bel) {
                                 var img = bx.querySelector('.wl-seat-img[data-for="' + id + '"]');
                                 if (img) img.remove();
