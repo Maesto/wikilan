@@ -135,7 +135,7 @@ a.wl-user, a.wl-user:hover { text-decoration: none; }
 }
 .wl-cal-running { border-left-color: #e53935; box-shadow: 0 0 4px rgba(229,57,53,.5); }
 /* continuation of an event that started the day before */
-.wl-cal-cont { opacity: 0.7; border-left-style: dashed; }
+.wl-cal-cont { border-left-style: dashed; }
 .wl-cal-time { font-family: monospace; margin-right: 0.6em; font-weight: bold; }
 .wl-cal-title { font-weight: bold; }
 .wl-cal-meta { display: block; font-size: 85%; opacity: 0.8; margin-top: 0.15em; }
