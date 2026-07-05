@@ -66,6 +66,15 @@ else the active LAN). Seating takes plan=<media id> to override the LAN's SVG.
   * Seat map: one seat per user. Clicking a free seat while already holding
     one (reserved OR arrived) never moves silently — the server replies with
     a confirm prompt; only the re-request with move=1 releases the old seat.
+  * Buddy seats: label a second spot 'A1b' in the plan SVG (position marker,
+    hidden in the rendered plan) and re-import — seats-import creates the
+    A1b row with buddy_of=A1. Solo, one circle sits at the midpoint of the
+    two labels; once a buddy is seated, two full-size circles sit at their
+    own labeled spots. Buddy spots can't be reserved directly: the seat
+    holder shares their table (click own seat → share dropdown of seatless
+    attendees; the buddy gets a notice + push) or a mod assigns via the
+    admin page. Port-map the buddy spot like any seat ('port-set <ns>
+    <port> A1b <ip>') and arrival detection works as usual.
   * Arrival: port↔seat↔IP map (admin page or `port-set`); a logged-in request
     from a mapped IP marks the user arrived — but only onto their first/own
     seat. If they already hold a different seat, nothing moves automatically:

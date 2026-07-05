@@ -327,6 +327,7 @@ class admin_plugin_wikilan extends AdminPlugin
                     'seat' => $s['seat_id'],
                     'value' => $s['admin_only'] ? 0 : 1,
                 ], $s['admin_only'] ? 'admin-only ✓' : 'admin-only ✗')
+                . (!empty($s['buddy_of']) ? ' <small>buddy of ' . hsc($s['buddy_of']) . '</small>' : '')
                 . '</td>'
                 . '<td>' . hsc($s['state'] ?? 'free') . '</td>'
                 . '<td>' . ($s['user'] ? hsc($s['user']) : '') . '</td>'

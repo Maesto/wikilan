@@ -10,6 +10,15 @@
 /* occupant avatar drawn into the hotspot by script.js */
 .wl-seat-img { pointer-events: none; clip-path: circle(50%); }
 
+/* release / share menu for the own seat on a buddy-capable table */
+.wl-seatmenu {
+    display: flex; flex-wrap: wrap; gap: 0.5em; align-items: center;
+    border: 1px solid var(--border, __border__); border-radius: 4px;
+    background: var(--background_alt, __background_alt__);
+    padding: 0.5em 0.8em; margin-bottom: 0.6em;
+}
+.wl-seatmenu button, .wl-seatmenu select { cursor: pointer; padding: 0.25em 0.7em; }
+
 .wl-seat {
     fill: #4caf50; fill-opacity: 0.55;
     stroke: #2e7d32; stroke-width: 1.5;

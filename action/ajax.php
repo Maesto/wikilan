@@ -69,6 +69,7 @@ class action_plugin_wikilan_ajax extends ActionPlugin
                         'avatar' => $s['user'] ? ($profiles[$s['user']]['avatar'] ?? null) : null,
                         'profile' => $s['user'] ? wl($wl->profilePage($s['user'])) : null,
                         'admin_only' => (int)$s['admin_only'],
+                        'buddy_of' => $s['buddy_of'] ?? null,
                     ];
                 }
                 return ['live' => $wl->isLive($lan), 'seats' => $states];
@@ -88,6 +89,19 @@ class action_plugin_wikilan_ajax extends ActionPlugin
                     max(0, $INPUT->int('minplayers'))
                 );
                 return ['games' => $games];
+
+            case 'buddy_candidates': {
+                // attendees without any seat — offered in the share dropdown
+                if ($user === '') return ['users' => []];
+                $lan = $this->requireLan();
+                $out = [];
+                foreach ($wl->attendees((int)$lan['id']) as $a) {
+                    if ($a['seat_id'] !== null || $a['user'] === $user) continue;
+                    $out[] = ['user' => $a['user'], 'name' => $wl->userName($a['user'])];
+                }
+                usort($out, static fn($a, $b) => strcasecmp($a['name'], $b['name']));
+                return ['users' => $out];
+            }
 
             case 'attendee_options':
                 // linked attendees of the context LAN, for the shared-games picker
@@ -189,6 +203,13 @@ class action_plugin_wikilan_ajax extends ActionPlugin
                     }
                 }
                 $err = $wl->reserveSeat((int)$lan['id'], $seat, $user, false, $move);
+                return $err ? ['error' => $err] : ['ok' => true];
+            }
+
+            case 'seat_share': {
+                $lan = $this->requireLan(true);
+                $err = $wl->shareSeat((int)$lan['id'], $user, trim($INPUT->str('user')));
+                if ($err === '') $this->flushNow(); // buddy's push shouldn't wait for cron
                 return $err ? ['error' => $err] : ['ok' => true];
             }
 

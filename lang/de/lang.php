@@ -73,6 +73,18 @@ $lang['shared_minplayers'] = 'min. Spieler';
 
 $lang['seat_tag']         = 'Platz %s';
 
+$lang['buddy_direct']       = 'Der Platz gehört zu %s — die Person dort kann ihn mit dir teilen.';
+$lang['buddy_not_capable']  = 'Platz %s hat keinen Buddy-Platz.';
+$lang['buddy_not_attending'] = 'Die Person muss sich erst als Teilnehmer anmelden.';
+$lang['buddy_has_seat']     = '%s hat schon einen Platz.';
+$lang['buddy_notice_title'] = 'Platz mit dir geteilt';
+$lang['buddy_notice_body']  = '%1$s teilt den Tisch mit dir: du hast jetzt Platz %3$s, direkt neben %2$s.';
+$lang['js']['release']       = 'Platz %s freigeben';
+$lang['js']['share_with']    = 'Tisch teilen mit…';
+$lang['js']['share_btn']     = 'Teilen';
+$lang['js']['cancel']        = 'Abbrechen';
+$lang['js']['no_candidates'] = 'Keine Teilnehmer ohne Platz verfügbar.';
+
 $lang['profile_lans']     = 'Besuchte LANs';
 $lang['profile_seat']     = 'Aktueller Platz';
 $lang['steam_add_friend'] = 'Als Steam-Freund hinzufügen';

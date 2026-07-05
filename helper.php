@@ -448,6 +448,10 @@ class helper_plugin_wikilan extends Plugin
         if (!$force) {
             if (!$this->isAttending($lanId, $user)) return $this->getLang('seat_need_attend');
             if ($seat['admin_only']) return sprintf($this->getLang('admin_seat_warn'), $seatId);
+            // buddy spots are handed out by the seat holder (shareSeat) or orga
+            if (!empty($seat['buddy_of'])) {
+                return sprintf($this->getLang('buddy_direct'), $seat['buddy_of']);
+            }
         }
 
         $cur = $this->seatState($lanId, $seatId);
@@ -485,6 +489,64 @@ class helper_plugin_wikilan extends Plugin
             $force ? 'admin-assigned' : 'reserved',
             time()
         );
+        return '';
+    }
+
+    /**
+     * Share the caller's seat: put $buddyUser on the seat's buddy spot
+     * (the 'A1b' row). Returns '' on success or a translated error.
+     */
+    public function shareSeat(int $lanId, string $host, string $buddyUser): string
+    {
+        $held = $this->seatOfUser($lanId, $host);
+        if (!$held) return $this->getLang('error');
+        $buddySeat = $this->getDB()->queryRecord(
+            "SELECT * FROM seats WHERE lan_id = ? AND buddy_of = ?",
+            $lanId,
+            $held['seat_id']
+        );
+        if (!$buddySeat) return sprintf($this->getLang('buddy_not_capable'), $held['seat_id']);
+        $cur = $this->seatState($lanId, $buddySeat['seat_id']);
+        if ($cur) {
+            return sprintf(
+                $this->getLang('seat_taken'),
+                $buddySeat['seat_id'],
+                $this->userName($cur['user'])
+            );
+        }
+        if ($buddyUser === '' || $buddyUser === $host) return $this->getLang('error');
+        if (!$this->isAttending($lanId, $buddyUser)) return $this->getLang('buddy_not_attending');
+        if ($this->seatsOfUser($lanId, $buddyUser)) {
+            return sprintf($this->getLang('buddy_has_seat'), $this->userName($buddyUser));
+        }
+        $this->getDB()->exec(
+            "INSERT INTO seat_state (lan_id, seat_id, user, state, ts) VALUES (?, ?, ?, 'reserved', ?)",
+            $lanId,
+            $buddySeat['seat_id'],
+            $buddyUser,
+            time()
+        );
+        $this->addNotice(
+            $lanId,
+            $buddyUser,
+            'buddy',
+            $this->getLang('buddy_notice_title'),
+            sprintf(
+                $this->getLang('buddy_notice_body'),
+                $this->userName($host),
+                $held['seat_id'],
+                $buddySeat['seat_id']
+            )
+        );
+        $this->queuePush($buddyUser, null, [
+            'title' => $this->getLang('buddy_notice_title'),
+            'body' => sprintf(
+                $this->getLang('buddy_notice_body'),
+                $this->userName($host),
+                $held['seat_id'],
+                $buddySeat['seat_id']
+            ),
+        ]);
         return '';
     }
 
@@ -638,8 +700,11 @@ class helper_plugin_wikilan extends Plugin
 
     // ---------------------------------------------------------------- seating-plan SVG
 
-    /** Seat-code pattern for labels in the plan */
-    public const SEAT_PATTERN = '/^[A-Z]{1,2}\d{1,3}$/';
+    /** Seat-code pattern for labels in the plan (trailing 'b' = buddy spot) */
+    public const SEAT_PATTERN = '/^[A-Z]{1,2}\d{1,3}b?$/';
+
+    /** Pattern matching buddy-spot labels, capturing the host seat code */
+    public const BUDDY_PATTERN = '/^([A-Z]{1,2}\d{1,3})b$/';
 
     /**
      * Parse a plan SVG and return [seatId => ['x'=>..,'y'=>..]] from text labels
@@ -671,24 +736,16 @@ class helper_plugin_wikilan extends Plugin
         if (!$doc) return '';
         $svgNs = 'http://www.w3.org/2000/svg';
 
-        foreach ($this->findSeatNodes($doc) as $seatId => $node) {
-            $st = $states[$seatId] ?? null;
+        // buddy spots by host seat: seatId => buddy seat id
+        $buddyOf = [];
+        foreach ($states as $sid => $st) {
+            if (!empty($st['buddy_of'])) $buddyOf[$st['buddy_of']] = $sid;
+        }
+
+        $decorate = function (DOMElement $hot, string $seatId, ?array $st) use ($viewer, $profiles) {
             $state = $st['state'] ?? null;
             $cls = 'wl-seat wl-seat-' . ($state ?: (($st['admin_only'] ?? 0) ? 'adminonly' : 'free'));
             if ($st && !empty($st['user']) && $st['user'] === $viewer) $cls .= ' wl-seat-mine';
-
-            if ($node->localName === 'text') {
-                // 16px monospace label, baseline-anchored: center the hotspot on it
-                $x = (float)$node->getAttribute('x') + 10;
-                $y = (float)$node->getAttribute('y') - 5.5;
-                $hot = $doc->createElementNS($svgNs, 'circle');
-                $hot->setAttribute('cx', (string)$x);
-                $hot->setAttribute('cy', (string)$y);
-                $hot->setAttribute('r', '15');
-                $node->parentNode->insertBefore($hot, $node->nextSibling);
-            } else {
-                $hot = $node; // explicit mode: the labeled shape is the hit area
-            }
             $hot->setAttribute('class', $cls);
             $hot->setAttribute('data-seat', $seatId);
             if ($st && !empty($st['user'])) {
@@ -698,6 +755,67 @@ class helper_plugin_wikilan extends Plugin
                 $avatar = $profiles[$st['user']]['avatar'] ?? '';
                 if ($avatar) $hot->setAttribute('data-avatar', $avatar);
             }
+        };
+
+        // buddy labels ('A1b') are position markers, not seats of their own:
+        // remember where they sit, hide them, and never give them a hotspot —
+        // the host renders the pair
+        $nodes = $this->findSeatNodes($doc);
+        $buddyPos = [];
+        foreach ($nodes as $sid => $node) {
+            if (!preg_match(self::BUDDY_PATTERN, $sid)) continue;
+            if ($node->localName === 'text') {
+                $buddyPos[$sid] = [
+                    'x' => (float)$node->getAttribute('x') + 10,
+                    'y' => (float)$node->getAttribute('y') - 5.5,
+                ];
+                $node->setAttribute('display', 'none');
+            }
+            unset($nodes[$sid]);
+        }
+
+        foreach ($nodes as $seatId => $node) {
+            $st = $states[$seatId] ?? null;
+            $buddyId = $buddyOf[$seatId] ?? null;
+            $buddySt = $buddyId !== null ? ($states[$buddyId] ?? null) : null;
+            $buddyOccupied = $buddySt && !empty($buddySt['user']);
+
+            if ($node->localName === 'text') {
+                // 16px monospace label, baseline-anchored: center the hotspot on it
+                $x = (float)$node->getAttribute('x') + 10;
+                $y = (float)$node->getAttribute('y') - 5.5;
+                // buddy geometry comes from the plan itself: solo, the host
+                // circle sits at the midpoint of the two labeled spots; with a
+                // buddy seated, two full-size circles sit at their own labels
+                $bp = $buddyId !== null ? ($buddyPos[$buddyId] ?? ['x' => $x + 32, 'y' => $y]) : null;
+                $mid = $bp ? ['x' => ($x + $bp['x']) / 2, 'y' => ($y + $bp['y']) / 2] : null;
+
+                $hot = $doc->createElementNS($svgNs, 'circle');
+                $hot->setAttribute('cx', (string)($buddyOccupied || !$mid ? $x : $mid['x']));
+                $hot->setAttribute('cy', (string)($buddyOccupied || !$mid ? $y : $mid['y']));
+                $hot->setAttribute('r', '15');
+                $node->parentNode->insertBefore($hot, $node->nextSibling);
+                if ($buddyId !== null) {
+                    // script.js re-splits/merges the pair on live state changes
+                    $hot->setAttribute('data-buddy', $buddyId);
+                    $hot->setAttribute('data-home', $x . ',' . $y);
+                    $hot->setAttribute('data-mid', $mid['x'] . ',' . $mid['y']);
+                    $hot->setAttribute('data-bpos', $bp['x'] . ',' . $bp['y']);
+                }
+                if ($buddyOccupied) {
+                    $bhot = $doc->createElementNS($svgNs, 'circle');
+                    $bhot->setAttribute('cx', (string)$bp['x']);
+                    $bhot->setAttribute('cy', (string)$bp['y']);
+                    $bhot->setAttribute('r', '15');
+                    $bhot->setAttribute('data-host', $seatId);
+                    $node->parentNode->insertBefore($bhot, $hot->nextSibling);
+                    $decorate($bhot, $buddyId, $buddySt);
+                }
+            } else {
+                $hot = $node; // explicit mode: the labeled shape is the hit area
+                              // (no buddy rendering — needs the computed circle)
+            }
+            $decorate($hot, $seatId, $st);
         }
 
         $root = $doc->documentElement;
@@ -775,13 +893,17 @@ class helper_plugin_wikilan extends Plugin
         $found = $this->parseSeatPlan($this->planSvg($lan));
         $db = $this->getDB();
         foreach ($found as $seatId => $pos) {
+            // 'A1b' labels mark the buddy spot of seat A1
+            $buddyOf = preg_match(self::BUDDY_PATTERN, $seatId, $m) ? $m[1] : null;
             $db->exec(
-                "INSERT INTO seats (lan_id, seat_id, svg_ref)
-                 VALUES (?, ?, ?)
-                 ON CONFLICT(lan_id, seat_id) DO UPDATE SET svg_ref = excluded.svg_ref",
+                "INSERT INTO seats (lan_id, seat_id, svg_ref, buddy_of)
+                 VALUES (?, ?, ?, ?)
+                 ON CONFLICT(lan_id, seat_id) DO UPDATE
+                 SET svg_ref = excluded.svg_ref, buddy_of = excluded.buddy_of",
                 $lan['id'],
                 $seatId,
-                round($pos['x'], 1) . ',' . round($pos['y'], 1)
+                round($pos['x'], 1) . ',' . round($pos['y'], 1),
+                $buddyOf
             );
         }
         return count($found);

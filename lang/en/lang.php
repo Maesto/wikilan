@@ -78,6 +78,19 @@ $lang['shared_minplayers'] = 'min. players';
 
 $lang['seat_tag']         = 'Seat %s';
 
+// buddy seats
+$lang['buddy_direct']       = 'That spot belongs to seat %s — its holder can share it with you.';
+$lang['buddy_not_capable']  = 'Seat %s has no buddy spot.';
+$lang['buddy_not_attending'] = 'They need to be marked as attending first.';
+$lang['buddy_has_seat']     = '%s already holds a seat.';
+$lang['buddy_notice_title'] = 'Seat shared with you';
+$lang['buddy_notice_body']  = '%1$s shares their table with you: you now hold spot %3$s, next to seat %2$s.';
+$lang['js']['release']       = 'Give up seat %s';
+$lang['js']['share_with']    = 'Share table with…';
+$lang['js']['share_btn']     = 'Share';
+$lang['js']['cancel']        = 'Cancel';
+$lang['js']['no_candidates'] = 'No seatless attendees available.';
+
 // profile
 $lang['profile_lans']     = 'LANs attended';
 $lang['profile_seat']     = 'Current seat';

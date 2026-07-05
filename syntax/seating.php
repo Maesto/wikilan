@@ -50,6 +50,7 @@ class syntax_plugin_wikilan_seating extends SyntaxPlugin
                 'state' => $s['state'],
                 'user' => $s['user'],
                 'admin_only' => (int)$s['admin_only'],
+                'buddy_of' => $s['buddy_of'] ?? null,
             ];
         }
 
@@ -92,6 +93,8 @@ class syntax_plugin_wikilan_seating extends SyntaxPlugin
                 . '<th>' . hsc($wl->getLang('seat_table_hdr')) . '</th><th></th><th></th>'
                 . '</tr></thead><tbody>';
             foreach ($seats as $s) {
+                // buddy spots surface only once someone actually sits there
+                if (!empty($s['buddy_of']) && !$s['user']) continue;
                 $state = $s['state']
                     ?: ($s['admin_only'] ? 'adminonly' : 'free');
                 $stateLabel = $s['state']

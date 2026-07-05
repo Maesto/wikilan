@@ -195,7 +195,9 @@
             var live = box.dataset.live === '1';
             var lan = box.dataset.lan;
 
-            box.querySelectorAll('.wl-seat').forEach(function (el) {
+            box.querySelectorAll('.wl-seat').forEach(bindSeat);
+
+            function bindSeat(el) {
                 var t = document.createElementNS('http://www.w3.org/2000/svg', 'title');
                 el.appendChild(t);
                 updateTooltip(el);
@@ -210,6 +212,11 @@
                         return;
                     }
                     if (!live || !c || !c.user) return;
+                    if (mine && el.dataset.buddy) {
+                        // buddy-capable table: offer release OR sharing
+                        openMenu(el, seat);
+                        return;
+                    }
                     var fn = mine ? 'seat_release' : 'seat_reserve';
                     ajax(fn, { lan: lan, seat: seat }, 'POST').then(function (res) {
                         if (res.confirm) {
@@ -228,7 +235,76 @@
                         refresh(box, lan);
                     });
                 });
-            });
+            }
+
+            function lstr(key, arg) {
+                var l = (window.LANG && LANG.plugins && LANG.plugins.wikilan) || {};
+                return (l[key] || key).replace('%s', arg || '');
+            }
+
+            /* release / share-with-a-buddy menu for the own seat */
+            function openMenu(el, seat) {
+                closeMenu();
+                var menu = document.createElement('div');
+                menu.className = 'wl-seatmenu';
+                var rel = document.createElement('button');
+                rel.textContent = lstr('release', seat);
+                rel.addEventListener('click', function () {
+                    ajax('seat_release', { lan: lan, seat: seat }, 'POST').then(function (res) {
+                        if (res.error) toast(seat, res.error, 'error');
+                        closeMenu();
+                        refresh(box, lan);
+                    });
+                });
+                menu.appendChild(rel);
+
+                var buddyEl = box.querySelector('.wl-seat[data-seat="' + el.dataset.buddy + '"]');
+                if (!buddyEl) { // buddy spot still free: offer sharing
+                    var label = document.createElement('span');
+                    label.textContent = lstr('share_with');
+                    var sel = document.createElement('select');
+                    var go = document.createElement('button');
+                    go.textContent = lstr('share_btn');
+                    go.disabled = true;
+                    ajax('buddy_candidates', { lan: lan }).then(function (res) {
+                        var users = res.users || [];
+                        if (!users.length) {
+                            label.textContent = lstr('no_candidates');
+                            sel.remove();
+                            go.remove();
+                            return;
+                        }
+                        users.forEach(function (u) {
+                            var o = document.createElement('option');
+                            o.value = u.user;
+                            o.textContent = u.name;
+                            sel.appendChild(o);
+                        });
+                        go.disabled = false;
+                    });
+                    go.addEventListener('click', function () {
+                        ajax('seat_share', { lan: lan, user: sel.value }, 'POST').then(function (res) {
+                            if (res.error) toast(seat, res.error, 'error');
+                            closeMenu();
+                            refresh(box, lan);
+                        });
+                    });
+                    menu.appendChild(label);
+                    menu.appendChild(sel);
+                    menu.appendChild(go);
+                }
+
+                var cancel = document.createElement('button');
+                cancel.textContent = lstr('cancel');
+                cancel.addEventListener('click', closeMenu);
+                menu.appendChild(cancel);
+                box.insertBefore(menu, box.firstChild);
+            }
+
+            function closeMenu() {
+                var m = box.querySelector('.wl-seatmenu');
+                if (m) m.remove();
+            }
 
             function updateTooltip(el) {
                 var t = el.querySelector('title');
@@ -267,8 +343,44 @@
 
             function refresh(bx, lanNs) {
                 ajax('seat_states', { lan: lanNs }).then(function (res) {
-                    Object.keys(res.seats || {}).forEach(function (id) {
-                        var s = res.seats[id];
+                    var seats = res.seats || {};
+                    // split/merge buddy pairs first so the styling pass below
+                    // finds the elements; geometry comes from the data attrs
+                    // the renderer took from the plan's own labels
+                    Object.keys(seats).forEach(function (id) {
+                        var s = seats[id];
+                        if (!s.buddy_of) return;
+                        var host = bx.querySelector('.wl-seat[data-seat="' + s.buddy_of + '"]');
+                        if (!host || !host.dataset.bpos) return;
+                        var bel = bx.querySelector('.wl-seat[data-seat="' + id + '"]');
+                        function setPos(elm, xy) {
+                            var p = xy.split(',');
+                            elm.setAttribute('cx', p[0]);
+                            elm.setAttribute('cy', p[1]);
+                        }
+                        if (s.user) {
+                            setPos(host, host.dataset.home);
+                            if (!bel) {
+                                bel = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+                                setPos(bel, host.dataset.bpos);
+                                bel.setAttribute('r', host.getAttribute('r'));
+                                bel.setAttribute('class', 'wl-seat');
+                                bel.setAttribute('data-seat', id);
+                                bel.setAttribute('data-host', s.buddy_of);
+                                host.parentNode.insertBefore(bel, host.nextSibling);
+                                bindSeat(bel);
+                            }
+                        } else {
+                            setPos(host, host.dataset.mid);
+                            if (bel) {
+                                var img = bx.querySelector('.wl-seat-img[data-for="' + id + '"]');
+                                if (img) img.remove();
+                                bel.remove();
+                            }
+                        }
+                    });
+                    Object.keys(seats).forEach(function (id) {
+                        var s = seats[id];
                         var el = bx.querySelector('.wl-seat[data-seat="' + id + '"]');
                         if (el) {
                             var cls = 'wl-seat wl-seat-' +
