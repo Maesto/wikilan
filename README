@@ -1,0 +1,117 @@
+====== WikiLAN ======
+
+LAN-party manager as a DokuWiki plugin. Install by placing this directory at
+lib/plugins/wikilan/ and running the install CLI command below.
+
+===== Syntax modules =====
+
+  ~~LAN:attendance~~            attend-toggle + roster (arrived auto-detected)
+  ~~LAN:seating~~               inline SVG plan + hotspots + table fallback
+                                (show=both|plan|table for split layouts)
+  ~~LAN:calendar~~              fahrplan-style event calendar (struct-backed)
+  ~~LAN:eventsignup~~           interested/signed-up buttons on event pages
+  ~~LAN:notify~~                embedded notice feed (room display)
+  ~~LAN:when~~                  inline schedule date, localized to the page
+                                language (buildup|start|end, date|time|datetime)
+  ~~LAN:profile~~               steam-style card: avatar, persona, presence,
+                                friend/profile deeplinks, stat tiles, played
+                                games split current-LAN vs lifetime, LANs
+                                attended, strichliste buy stats
+  ~~LAN:sharedgames~~           owned-library intersection picker
+                                (multiplayer-only + min-players filters;
+                                player counts from PCGamingWiki, resolved
+                                lazily by cron — unknown counts pass filters)
+  ~~LAN:strichliste~~           buy statistics from the read-only strichliste
+                                MySQL: top articles + top buyers for the
+                                context LAN's window (buildup→end) and
+                                all-time (limit=, alltime=0, user= for a
+                                one-line personal summary)
+
+All modules take lan=<neutral ns> (default: edition derived from the page id,
+else the active LAN). Seating takes plan=<media id> to override the LAN's SVG.
+
+===== Data flow =====
+
+  * Edition state machine: planned → active → archived (admin/CLI flip;
+    only one active). Live modules render fresh state; archived render frozen rows.
+  * Event pages live under <lang>:msl:<year>_<n>:events:* with the struct
+    'event' schema (day, starttime, duration [min], host, category, price [€],
+    cutoffday, cutofftime). Signups/attendance/seats are keyed by
+    language-neutral ids.
+  * Food/paid events: set price + signup cutoff (fahrplan-relative day, time
+    defaults to 23:59). Signups carry an optional comment; state changes are
+    blocked after the cutoff (mods excepted). Payment: users book a
+    strichliste transaction of the exact price with the event's payment code
+    (the page name) as comment, OR — preferred, kiosk-compatible — buy the
+    strichliste product whose id is set on the event (productid field; the
+    matcher follows the article precursor_id version chain, since editing a
+    strichliste product creates a new id). Cron reconciles via read-only
+    access to the strichliste MySQL (sqlquery plugin credentials, strichliste
+    usernames == wiki logins by site convention — per-user overrides in the
+    admin page's name-mapping table) and flags signups paid.
+    Mods can toggle paid manually (cash) on the signup list.
+  * Event scheduling is fahrplan-relative: day 1 = the edition's start day,
+    0/-1/… are buildup days (day N → start + N-1 days). Rescheduling the
+    edition (lan-dates) moves all events automatically.
+  * Users create events via the bureaucracy form <edition>:events:new
+    (linked under ~~LAN:calendar~~; struct data saved by struct's
+    bureaucracy integration, page from msl:event_template). install /
+    lan-create seed those pages plus namespace _template.txt skeletons for
+    manually created event and msl:users:* pages. events:start and
+    events:new are reserved (never listed as events).
+  * Edition schedule: buildup / start / end-aka-teardown-start datetimes on
+    the lans row (admin page or `lan-dates`). ~~LAN:when~~ embeds them in
+    pages so content follows schedule changes; missing dates render a
+    localized "date TBA".
+  * Seat map: one seat per user. Clicking a free seat while already holding
+    one (reserved OR arrived) never moves silently — the server replies with
+    a confirm prompt; only the re-request with move=1 releases the old seat.
+  * Arrival: port↔seat↔IP map (admin page or `port-set`); a logged-in request
+    from a mapped IP marks the user arrived — but only onto their first/own
+    seat. If they already hold a different seat, nothing moves automatically:
+    a banner offers a one-click confirmed move (target re-resolved from the
+    client IP server-side). Organizer overrides via the admin page.
+  * Notifications: notices table → site-wide widget (30s poll) + Web Push
+    (VAPID keys auto-generated, stored in sqlite opts). Cron flushes outbox.
+  * User chips (rosters, signup lists) and occupied seats link to the user's
+    profile page …:msl:users:<login>; occupied plan hotspots show the Steam
+    avatar. A logged-in user visiting their own missing profile page gets a
+    plain HTML creation form (about/clan/games/hardware — no markup needed);
+    the page is generated from those fields and stays normally editable.
+  * Steam linking: User Tools → Steam (?do=wikilan_steam) works with every
+    auth backend (LDAP included). The ?do=profile fieldset only appears for
+    backends that allow profile editing. Persona name + avatar are cached at
+    link time and refreshed by the now-playing sync; rosters fall back to the
+    wiki name + a lettered placeholder avatar for unlinked users.
+
+===== CLI =====
+
+  php bin/plugin.php wikilan install            # db, struct schemas, vapid
+  php bin/plugin.php wikilan cron               # every minute (cron.d/wikilan)
+  php bin/plugin.php wikilan lan-create [--start=… --end=… --plan=…] <ns> <title>
+  php bin/plugin.php wikilan lan-state <ns> <planned|active|archived>
+  php bin/plugin.php wikilan lan-dates [--buildup=… --start=… --end=…] <ns>
+  php bin/plugin.php wikilan seats-import <ns>  # seed seats from plan SVG labels
+  php bin/plugin.php wikilan port-set <ns> <port> <seat> <ip>
+  php bin/plugin.php wikilan push-test <user>
+  (options must come BEFORE positional arguments)
+
+===== Seating plan SVG =====
+
+Draw the plan in Inkscape; label each seat with a text code matching
+^[A-Z]{1,2}[0-9]+$ (e.g. A1, C12). The renderer injects a hotspot circle over
+each label. Alternative: name any shape with the seat code in the Objects
+panel (inkscape:label) and that shape becomes the hit area. Re-import after
+changing the SVG (admin page button or seats-import).
+
+===== Admin =====
+
+Admin → WikiLAN: editions & state, plan media, seat flags/assignments,
+port map, wrong-seat mismatches, strichliste name mapping, broadcasts.
+Occupied seat rows carry
+one-click actions on the current holder (set arrived / unarrive / clear);
+the assign form is an attendee dropdown for seating someone else. Mods (group 'lanmod',
+configurable) get seat overrides + broadcasts; edition management is
+admin-only. NOTE: DokuWiki only offers admin pages to managers — mods
+additionally need $conf['manager'] = '@lanmod' (set in local.php) or
+they never see the WikiLAN admin entry.

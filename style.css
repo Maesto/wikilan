@@ -1,0 +1,238 @@
+/* ---------------------------------------------------------------- seat map */
+/* plans are user-drawn SVGs that assume white paper (black strokes, white
+   fills) — render them on a paper panel so dark mode can't swallow them */
+.wl-plan-wrap {
+    max-width: 1100px; margin: 0 auto;
+    background: #fff; padding: 0.75em; border-radius: 6px;
+}
+.wl-plan { width: 100%; height: auto; display: block; }
+
+/* occupant avatar drawn into the hotspot by script.js */
+.wl-seat-img { pointer-events: none; clip-path: circle(50%); }
+
+.wl-seat {
+    fill: #4caf50; fill-opacity: 0.55;
+    stroke: #2e7d32; stroke-width: 1.5;
+    cursor: pointer;
+    transition: fill-opacity 0.15s;
+}
+.wl-seat:hover { fill-opacity: 0.9; }
+.wl-seat-free          { fill: #4caf50; stroke: #2e7d32; }
+.wl-seat-reserved      { fill: #ffb300; stroke: #ff8f00; }
+.wl-seat-arrived       { fill: #e53935; stroke: #b71c1c; }
+.wl-seat-admin-assigned { fill: #8e24aa; stroke: #4a148c; }
+.wl-seat-adminonly     { fill: #90a4ae; stroke: #546e7a; cursor: not-allowed; }
+.wl-seat-mine          { stroke: #01579b; stroke-width: 3.5; }
+
+.wl-legend { margin: 0.4em 0 1em; font-size: 90%; }
+.wl-legend-item { margin-right: 1.2em; white-space: nowrap; }
+.wl-dot {
+    display: inline-block; width: 0.8em; height: 0.8em;
+    border-radius: 50%; margin-right: 0.3em; vertical-align: baseline;
+}
+.wl-dot.wl-seat-free           { background: #4caf50; }
+.wl-dot.wl-seat-reserved       { background: #ffb300; }
+.wl-dot.wl-seat-arrived        { background: #e53935; }
+.wl-dot.wl-seat-admin-assigned { background: #8e24aa; }
+.wl-dot.wl-seat-adminonly      { background: #90a4ae; }
+
+.wl-seat-table td.wl-seat-reserved { color: #ff8f00; }
+.wl-seat-table td.wl-seat-arrived  { color: #e53935; }
+
+/* ---------------------------------------------------------------- attendance / signups */
+/* mindthedark exposes the live palette as CSS vars (--border, --background_alt, ...)
+   that flip with its dark/light switch; the __ini__ values below are the compiled-in
+   light palette and only serve as fallback for templates without those vars. */
+.wl-attend-btn, .wl-signup-btn, .wl-shared-go, .wl-push-btn {
+    cursor: pointer; padding: 0.25em 0.9em; margin: 0 0.3em 0.3em 0;
+    border: 1px solid var(--border, __border__); border-radius: 4px;
+    background: var(--background_alt, __background_alt__);
+    color: var(--text, __text__);
+}
+.wl-signup-btn.wl-active { background: #4caf50; color: #fff; border-color: #2e7d32; }
+
+/* Steam-friends-style user lists (roster, signups) */
+.wl-userlist {
+    list-style: none; padding: 0; margin: 0.5em 0;
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(16em, 1fr)); gap: 3px;
+}
+.wl-user-row {
+    display: flex; align-items: center; justify-content: space-between; gap: 0.5em;
+    padding: 0.35em 0.6em; border-radius: 3px;
+    background: linear-gradient(90deg, #1f2c3a, #23384d);
+}
+.wl-user { display: inline-flex; align-items: center; gap: 0.55em; min-width: 0; }
+/* chips are links to the profile page — keep the Steam-friend look */
+a.wl-user, a.wl-user:hover { text-decoration: none; }
+.wl-user-avatar {
+    width: 40px; height: 40px; flex: none; object-fit: cover;
+    border: 2px solid #898989; background: #32353c;
+}
+.wl-user-avatar-ph {
+    display: inline-flex; align-items: center; justify-content: center;
+    color: #dfe3e6; font-weight: bold; font-size: 20px;
+    background: linear-gradient(135deg, #3a4450, #23282e);
+}
+.wl-user-names { display: flex; flex-direction: column; line-height: 1.25; min-width: 0; }
+.wl-user-primary {
+    color: #b8bcbf; font-weight: bold;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.wl-user-sub {
+    color: #6e7377; font-size: 82%;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+/* presence colors like Steam: green in-game, blue online/arrived, grey offline */
+.wl-user-ingame .wl-user-avatar   { border-color: #90ba3c; }
+.wl-user-ingame .wl-user-primary  { color: #90ba3c; }
+.wl-user-ingame .wl-user-sub      { color: #7ba234; }
+.wl-user-online .wl-user-avatar   { border-color: #57cbde; }
+.wl-user-online .wl-user-primary  { color: #57cbde; }
+.wl-user-online .wl-user-sub      { color: #4c91ac; }
+
+.wl-seat-tag {
+    background: var(--background_alt, __background_alt__);
+    border: 1px solid var(--border, __border__);
+    border-radius: 3px; padding: 0 0.35em; font-size: 85%; font-family: monospace;
+}
+.wl-user-row .wl-seat-tag { background: rgba(0,0,0,.35); border-color: #3d4450; color: #b8bcbf; }
+.wl-arrived-tag { color: #e53935; font-size: 85%; }
+.wl-signup-list { margin: 0.5em 0; }
+.wl-signup-price { font-weight: bold; }
+.wl-signup-cutoff.wl-closed { color: #e53935; font-weight: bold; }
+.wl-signup-comment {
+    margin: 0 0.3em 0.3em 0; padding: 0.25em 0.5em; min-width: 16em;
+    border: 1px solid var(--border, __border__); border-radius: 4px;
+    background: var(--background, __background__); color: var(--text, __text__);
+}
+.wl-paid-tag { border-radius: 3px; padding: 0 0.4em; font-size: 85%; font-weight: bold; }
+.wl-paid-tag.wl-paid { background: #2e5d32; color: #b6e0b8; }
+.wl-paid-tag.wl-unpaid { background: #6c3b00; color: #ffd39f; }
+.wl-paid-toggle {
+    cursor: pointer; font-size: 80%; padding: 0 0.4em; border-radius: 3px;
+    border: 1px solid #3d4450; background: rgba(0,0,0,.35); color: #b8bcbf;
+}
+.wl-newevent { margin: 0.8em 0; }
+.wl-when.wl-empty { font-style: italic; }
+
+/* ---------------------------------------------------------------- calendar */
+.wl-calendar { display: flex; flex-wrap: wrap; gap: 1em; align-items: flex-start; }
+.wl-cal-day { flex: 1 1 16em; min-width: 14em; }
+.wl-cal-dayhead { border-bottom: 2px solid var(--border, __border__); margin-bottom: 0.4em; }
+.wl-cal-event {
+    border: 1px solid var(--border, __border__); border-left: 4px solid #4caf50;
+    border-radius: 4px; padding: 0.4em 0.6em; margin-bottom: 0.5em;
+    background: var(--background_alt, __background_alt__);
+}
+.wl-cal-running { border-left-color: #e53935; box-shadow: 0 0 4px rgba(229,57,53,.5); }
+.wl-cal-time { font-family: monospace; margin-right: 0.6em; font-weight: bold; }
+.wl-cal-title { font-weight: bold; }
+.wl-cal-meta { display: block; font-size: 85%; opacity: 0.8; margin-top: 0.15em; }
+
+/* ---------------------------------------------------------------- widget & toasts */
+.wl-widget { position: fixed; right: 1em; bottom: 1em; z-index: 900; }
+.wl-widget-bell {
+    font-size: 1.3em; border-radius: 50%; width: 2.2em; height: 2.2em;
+    border: 1px solid var(--border, __border__);
+    background: var(--background, __background__);
+    cursor: pointer; box-shadow: 0 2px 6px rgba(0,0,0,.25);
+}
+.wl-widget-bell.wl-widget-unread { background: #ffb300; }
+.wl-widget-panel {
+    position: absolute; right: 0; bottom: 2.8em; width: 22em; max-height: 24em;
+    overflow-y: auto; background: var(--background, __background__);
+    border: 1px solid var(--border, __border__);
+    border-radius: 6px; box-shadow: 0 4px 16px rgba(0,0,0,.3); padding: 0.6em;
+}
+.wl-widget-list { list-style: none; margin: 0; padding: 0; font-size: 90%; }
+.wl-widget-list li { padding: 0.3em 0; border-bottom: 1px dotted var(--border, __border__); }
+.wl-widget-list li.wl-notice-broadcast { font-weight: bold; }
+
+.wl-toasts { position: fixed; right: 1em; bottom: 4em; z-index: 950; }
+.wl-toast {
+    background: var(--background, __background__);
+    border: 1px solid var(--border, __border__);
+    border-left: 4px solid #ffb300; border-radius: 4px;
+    box-shadow: 0 4px 12px rgba(0,0,0,.3);
+    padding: 0.6em 1em; margin-top: 0.5em; max-width: 22em;
+    opacity: 0; transform: translateY(8px); transition: all 0.3s;
+}
+.wl-toast.wl-show { opacity: 1; transform: none; }
+.wl-toast-error { border-left-color: #e53935; }
+
+/* ---------------------------------------------------------------- misc */
+.wl-empty { opacity: 0.7; font-style: italic; }
+.wl-notify-feed .wl-notices { list-style: none; padding-left: 0; }
+.wl-notice-time { font-family: monospace; opacity: 0.7; margin-right: 0.4em; }
+/* Steam-style profile card */
+.wl-profile {
+    border-radius: 6px; overflow: hidden; color: #c7d5e0;
+    background: linear-gradient(135deg, #1b2838 0%, #2a475e 100%);
+}
+.wl-profile a { color: #66c0f4; }
+.wl-profile-head { display: flex; align-items: center; gap: 1em; padding: 1em 1.2em; }
+.wl-profile-avatar {
+    width: 96px; height: 96px; flex: none; object-fit: cover;
+    border: 3px solid #898989; background: #32353c;
+}
+.wl-profile-avatar.wl-user-avatar-ph { font-size: 44px; }
+.wl-profile.wl-user-ingame .wl-profile-avatar { border-color: #90ba3c; }
+.wl-profile.wl-user-online .wl-profile-avatar { border-color: #57cbde; }
+.wl-profile-id { min-width: 0; }
+.wl-profile-persona { font-size: 1.5em; font-weight: bold; color: #e9eaeb; line-height: 1.2; }
+.wl-profile-wikiname { color: #8f98a0; }
+.wl-profile-login { font-size: 85%; }
+.wl-profile-status { margin-top: 0.2em; color: #898989; }
+.wl-profile.wl-user-ingame .wl-profile-status { color: #90ba3c; }
+.wl-profile.wl-user-online .wl-profile-status { color: #57cbde; }
+.wl-profile .wl-steam-deeplink { display: inline-block; margin-top: 0.3em; font-size: 90%; }
+.wl-profile-body { padding: 0.8em 1.2em; background: rgba(0, 0, 0, 0.25); }
+.wl-profile-body:empty { display: none; }
+.wl-profile-body a { color: #66c0f4; }
+
+/* header stat tiles (LANs / hours / games) */
+.wl-profile-statbar { display: flex; gap: 1.5em; margin-left: auto; padding-right: 0.5em; }
+.wl-profile-tile { display: flex; flex-direction: column; align-items: center; }
+.wl-tile-num { font-size: 1.6em; font-weight: bold; color: #e9eaeb; line-height: 1.1; }
+.wl-tile-label { font-size: 80%; color: #8f98a0; white-space: nowrap; }
+@media (max-width: 40em) { .wl-profile-statbar { display: none; } }
+
+/* stat columns fill the horizontal space */
+.wl-profile-cols {
+    display: grid; gap: 0.5em 2em;
+    grid-template-columns: repeat(auto-fit, minmax(15em, 1fr));
+    align-items: start;
+}
+.wl-profile-sec h4 {
+    color: #e9eaeb; margin: 0.4em 0 0.3em;
+    border-bottom: 1px solid rgba(255,255,255,.15); padding-bottom: 0.2em;
+}
+.wl-profile-sec ul { list-style: none; padding-left: 0; margin: 0.2em 0; }
+.wl-profile-sec li { padding: 0.1em 0; }
+.wl-hours { color: #8f98a0; font-size: 88%; margin-left: 0.4em; white-space: nowrap; }
+.wl-sl-balance { color: #8f98a0; font-size: 90%; }
+
+/* no-markup profile creation form (shown on the own, missing profile page) */
+.wl-profile-create {
+    border: 1px solid var(--border, __border__); border-radius: 6px;
+    padding: 1em 1.2em; margin: 1em 0; max-width: 42em;
+    background: var(--background_alt, __background_alt__);
+}
+.wl-profile-create label { display: block; margin: 0.6em 0; font-weight: bold; }
+.wl-profile-create input, .wl-profile-create textarea {
+    display: block; width: 100%; box-sizing: border-box; margin-top: 0.2em;
+    font-weight: normal; padding: 0.35em 0.5em;
+    border: 1px solid var(--border, __border__); border-radius: 4px;
+    background: var(--background, __background__); color: var(--text, __text__);
+}
+.wl-profile-create button { margin-top: 0.6em; padding: 0.4em 1.2em; cursor: pointer; }
+
+/* ------------------------------------------------------------ strichliste */
+.wl-sl-tables { display: flex; flex-wrap: wrap; gap: 1.5em; align-items: flex-start; }
+.wl-strichliste h4 { margin: 0.8em 0 0.3em; }
+.wl-shared-user { display: inline-block; margin: 0 1em 0.4em 0; white-space: nowrap; }
+.wl-shared-minplayers { margin: 0 0.8em; }
+.wl-shared-minplayers input { width: 4em; }
+.wl-inline-form { display: inline; margin-right: 0.4em; }
+.wl-admin table { margin-bottom: 1em; }
+.wl-admin tr.wl-current { outline: 2px solid #4caf50; }

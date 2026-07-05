@@ -1,0 +1,8 @@
+base   wikilan
+author Maesto
+email
+date   2026-07-02
+name   WikiLAN
+desc   LAN-party manager: seating plan, attendance, Steam integration, events, calendar, notifications
+url
+minphp 8.1
