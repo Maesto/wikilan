@@ -5,7 +5,7 @@
         { "class": "Text",    "label": "starttime", "sort": 2, "ismulti": false, "isenabled": true, "config": {} },
         { "class": "Decimal", "label": "duration",  "sort": 3, "ismulti": false, "isenabled": true, "config": {} },
         { "class": "User",    "label": "host",      "sort": 5, "ismulti": false, "isenabled": true, "config": {} },
-        { "class": "Dropdown", "label": "category", "sort": 6, "ismulti": false, "isenabled": true, "config": { "values": "orga, tournament, casual, food, other" } },
+        { "class": "Dropdown", "label": "category", "sort": 6, "ismulti": false, "isenabled": true, "config": { "values": "orga, tournament, game, food, other" } },
         { "class": "Decimal", "label": "price",     "sort": 7, "ismulti": false, "isenabled": true, "config": { "postfix": "€" } },
         { "class": "Decimal", "label": "cutoffday", "sort": 8, "ismulti": false, "isenabled": true, "config": {} },
         { "class": "Text",    "label": "cutofftime", "sort": 9, "ismulti": false, "isenabled": true, "config": {} },
