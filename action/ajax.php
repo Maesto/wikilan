@@ -283,8 +283,85 @@ class action_plugin_wikilan_ajax extends ActionPlugin
             }
         }
 
+        if (strpos($fn, 'tourney_') === 0) {
+            return $this->tourney($fn, $user);
+        }
+
         http_status(404);
         return ['error' => 'unknown fn'];
+    }
+
+    /**
+     * Tournament mutations. Creation is gated by canCreate (mods + event
+     * hosts); everything else by the organizer check. Helpers return '' on
+     * success or a localized error message.
+     */
+    protected function tourney(string $fn, string $user): array
+    {
+        global $INPUT;
+        /** @var helper_plugin_wikilan_tourney $th */
+        $th = plugin_load('helper', 'wikilan_tourney');
+
+        if ($fn === 'tourney_create') {
+            $pid = $this->wl->neutralId($INPUT->str('event'));
+            if (!$th->canCreate($pid, $user)) {
+                http_status(403);
+                return ['error' => $th->getLang('t_not_orga')];
+            }
+            $err = $th->create(
+                $pid,
+                $INPUT->str('mode'),
+                $INPUT->int('size'),
+                $INPUT->int('advance'),
+                $user
+            );
+            return $err === '' ? ['ok' => true] : ['error' => $err];
+        }
+
+        $tid = $INPUT->int('tid');
+        $t = $th->get($tid);
+        if (!$t || !$th->isOrga($t, $user)) {
+            http_status(403);
+            return ['error' => $th->getLang('t_not_orga')];
+        }
+
+        switch ($fn) {
+            case 'tourney_seed':
+                $err = $th->seed($tid);
+                break;
+            case 'tourney_advance':
+                $err = $th->advance($tid);
+                break;
+            case 'tourney_finish':
+                $err = $th->finish($tid);
+                break;
+            case 'tourney_delete':
+                $th->delete($tid);
+                $err = '';
+                break;
+            case 'tourney_rank':
+                $err = $th->setRank($tid, $INPUT->int('slot'), $INPUT->int('rank'));
+                break;
+            case 'tourney_winner':
+                $err = $th->setWinner($tid, $INPUT->int('group'), $INPUT->str('team'));
+                break;
+            case 'tourney_move':
+                $err = $th->movePlayer($tid, $INPUT->int('slot'), $INPUT->str('target'));
+                break;
+            case 'tourney_add':
+                $err = $th->addPlayer($tid, $INPUT->int('group'), $INPUT->str('user'));
+                break;
+            case 'tourney_remove':
+                $err = $th->removePlayer($tid, $INPUT->int('slot'));
+                break;
+            case 'tourney_orga':
+                $err = $th->setOrga($tid, trim($INPUT->str('user')), $INPUT->bool('add'));
+                break;
+            default:
+                http_status(404);
+                return ['error' => 'unknown fn'];
+        }
+        return $err === '' ? ['ok' => true] : ['error' => $err];
     }
 
     /**

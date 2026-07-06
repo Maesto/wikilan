@@ -24,6 +24,11 @@
         return fetch(url, opts).then(function (r) { return r.json(); });
     }
 
+    function lstr(key, arg) {
+        var l = (window.LANG && LANG.plugins && LANG.plugins.wikilan) || {};
+        return (l[key] || key).replace('%s', arg || '');
+    }
+
     /* ------------------------------------------------------------ toasts */
 
     var toastBox = null;
@@ -235,11 +240,6 @@
                         refresh(box, lan);
                     });
                 });
-            }
-
-            function lstr(key, arg) {
-                var l = (window.LANG && LANG.plugins && LANG.plugins.wikilan) || {};
-                return (l[key] || key).replace('%s', arg || '');
             }
 
             /* release / share-with-a-buddy menu for the own seat */
@@ -554,11 +554,103 @@
         });
     }
 
+    /* ------------------------------------------------------------ tournaments */
+
+    function initTournament() {
+        document.querySelectorAll('.wl-tourney').forEach(function (box) {
+            function post(fn, data, confirmKey) {
+                if (confirmKey && !window.confirm(lstr(confirmKey))) return;
+                data = data || {};
+                if (box.dataset.tid) data.tid = box.dataset.tid;
+                ajax(fn, data, 'POST').then(function (res) {
+                    if (res.error) return toast('', res.error, 'error');
+                    location.reload();
+                });
+            }
+            function on(sel, evt, handler) {
+                box.querySelectorAll(sel).forEach(function (el) {
+                    el.addEventListener(evt, function () { handler(el); });
+                });
+            }
+
+            on('.wl-t-create', 'click', function () {
+                post('tourney_create', {
+                    event: box.dataset.event,
+                    mode: box.querySelector('.wl-t-newmode').value,
+                    size: box.querySelector('.wl-t-newsize').value,
+                    advance: box.querySelector('.wl-t-newadv').value
+                });
+            });
+            // "advance per lobby" only applies to ffa mode
+            var modeSel = box.querySelector('.wl-t-newmode');
+            if (modeSel) {
+                var syncAdv = function () {
+                    var w = box.querySelector('.wl-t-advwrap');
+                    if (w) w.style.display = modeSel.value === 'teams' ? 'none' : '';
+                };
+                modeSel.addEventListener('change', syncAdv);
+                syncAdv();
+            }
+
+            on('.wl-t-seed', 'click', function () { post('tourney_seed', {}, 't_confirm_seed'); });
+            on('.wl-t-advance', 'click', function () { post('tourney_advance', {}, 't_confirm_advance'); });
+            on('.wl-t-finish', 'click', function () { post('tourney_finish', {}, 't_confirm_finish'); });
+            on('.wl-t-delete', 'click', function () { post('tourney_delete', {}, 't_confirm_delete'); });
+
+            // rank entry saves silently — no reload between typing 8 placements
+            on('.wl-t-rank', 'change', function (el) {
+                ajax('tourney_rank', {
+                    tid: box.dataset.tid,
+                    slot: el.closest('li').dataset.slot,
+                    rank: el.value || 0
+                }, 'POST').then(function (res) {
+                    if (res.error) return toast('', res.error, 'error');
+                    el.classList.add('wl-t-saved');
+                    setTimeout(function () { el.classList.remove('wl-t-saved'); }, 800);
+                });
+            });
+
+            on('.wl-t-move', 'change', function (el) {
+                if (!el.value) return;
+                post('tourney_move', {
+                    slot: el.closest('li').dataset.slot,
+                    target: el.value
+                });
+            });
+            on('.wl-t-remove', 'click', function (el) {
+                post('tourney_remove', { slot: el.closest('li').dataset.slot });
+            });
+            on('.wl-t-add', 'click', function (el) {
+                var input = el.parentNode.querySelector('.wl-t-adduser');
+                if (!input.value.trim()) return;
+                post('tourney_add', {
+                    group: el.closest('.wl-t-group').dataset.group,
+                    user: input.value.trim()
+                });
+            });
+            on('.wl-t-winner', 'click', function (el) {
+                post('tourney_winner', {
+                    group: el.closest('.wl-t-group').dataset.group,
+                    team: el.closest('.wl-t-team').dataset.team
+                }, 't_confirm_winner');
+            });
+            on('.wl-t-orgaadd', 'click', function (el) {
+                var input = box.querySelector('.wl-t-orgauser');
+                if (!input.value.trim()) return;
+                post('tourney_orga', { user: input.value.trim(), add: 1 });
+            });
+            on('.wl-t-orgadel', 'click', function (el) {
+                post('tourney_orga', { user: el.dataset.user, add: 0 });
+            });
+        });
+    }
+
     document.addEventListener('DOMContentLoaded', function () {
         if (!cfg()) return;
         initWidget();
         initSeating();
         initButtons();
         initSharedGames();
+        initTournament();
     });
 })();

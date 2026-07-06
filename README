@@ -10,6 +10,14 @@ lib/plugins/wikilan/ and running the install CLI command below.
                                 (show=both|plan|table for split layouts)
   ~~LAN:calendar~~              fahrplan-style event calendar (struct-backed)
   ~~LAN:eventsignup~~           interested/signed-up buttons on event pages
+  ~~LAN:tournament~~            bracket on an event page: seeds signups into
+                                lobbies (top-N advance until a final) or
+                                teams (single elimination); organizers (mods,
+                                creator, per-tournament orga list, event
+                                hosts) enter results, move players between
+                                groups and advance rounds
+                                (mode=ffa|teams size= advance= preset the
+                                create form)
   ~~LAN:notify~~                embedded notice feed (room display)
   ~~LAN:when~~                  inline schedule date, localized to the page
                                 language (buildup|start|end, date|time|datetime)

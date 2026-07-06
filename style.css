@@ -247,3 +247,90 @@ a.wl-user, a.wl-user:hover { text-decoration: none; }
 .wl-inline-form { display: inline; margin-right: 0.4em; }
 .wl-admin table { margin-bottom: 1em; }
 .wl-admin tr.wl-current { outline: 2px solid #4caf50; }
+
+/* ---------------------------------------------------------- tournaments */
+
+.wl-tourney { margin: 1em 0; }
+.wl-t-meta { font-weight: bold; margin-bottom: 0.2em; }
+.wl-t-orgas { color: __text_neu__; font-size: 90%; margin-top: 0; }
+.wl-t-orgas .wl-t-orgadel { margin-left: 0.15em; }
+
+.wl-t-rounds {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1em;
+    align-items: flex-start;
+}
+.wl-t-round {
+    flex: 1 1 16em;
+    min-width: 15em;
+    opacity: 0.75;
+}
+.wl-t-round.wl-t-current { opacity: 1; }
+.wl-t-round h4 { margin: 0 0 0.4em; }
+
+.wl-t-group {
+    border: 1px solid __border__;
+    border-radius: 6px;
+    background: __background_alt__;
+    padding: 0.5em 0.7em;
+    margin-bottom: 0.8em;
+}
+.wl-t-group h5 { margin: 0 0 0.3em; }
+.wl-t-group h6 { margin: 0.4em 0 0.2em; }
+
+ul.wl-t-slots { list-style: none; margin: 0; padding: 0; }
+ul.wl-t-slots li {
+    display: flex;
+    align-items: center;
+    gap: 0.4em;
+    padding: 0.15em 0;
+}
+ul.wl-t-slots .wl-user { flex: 1 1 auto; min-width: 0; }
+ul.wl-t-slots .wl-user-avatar { width: 24px; height: 24px; }
+
+.wl-t-rank { width: 3.2em; }
+.wl-t-rank.wl-t-saved { outline: 2px solid #4a4; }
+.wl-t-rankbadge {
+    font-weight: bold;
+    min-width: 2em;
+    text-align: center;
+}
+.wl-t-move { max-width: 9em; }
+.wl-t-remove, .wl-t-orgadel {
+    border: none;
+    background: none;
+    color: #b33;
+    cursor: pointer;
+    padding: 0 0.2em;
+    font-size: 110%;
+}
+.wl-t-addrow { display: flex; gap: 0.3em; margin-top: 0.4em; }
+.wl-t-addrow .wl-t-adduser { flex: 1 1 auto; min-width: 0; }
+
+.wl-t-team { border-left: 3px solid __border__; padding-left: 0.5em; margin: 0.3em 0; }
+.wl-t-team.wl-t-won { border-left-color: #4a4; }
+.wl-t-winmark { color: #4a4; font-weight: bold; }
+
+.wl-t-controls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5em;
+    align-items: center;
+    margin-top: 0.6em;
+    padding-top: 0.5em;
+    border-top: 1px dashed __border__;
+}
+.wl-t-controls .wl-t-delete { margin-left: auto; color: #b33; }
+.wl-t-orgactl { display: inline-flex; gap: 0.2em; }
+
+.wl-t-podium {
+    border: 1px solid __border__;
+    border-radius: 6px;
+    padding: 0.6em 0.9em;
+    margin: 0.5em 0 1em;
+    background: __background_alt__;
+}
+.wl-t-champion { font-size: 115%; font-weight: bold; margin: 0 0 0.3em; }
+.wl-t-medal { font-size: 130%; margin-right: 0.3em; }
+.wl-t-createbox label { margin-right: 0.8em; }
