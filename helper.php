@@ -51,13 +51,35 @@ class helper_plugin_wikilan extends Plugin
         return in_array($this->getConf('mod_group'), $grps);
     }
 
+    /**
+     * Auth backend — $auth is not set up under NOSESSION (CLI, maintenance
+     * scripts), which would degrade display names in synced wiki text, so
+     * fall back to loading the configured backend directly.
+     */
+    public function auth()
+    {
+        global $auth, $conf;
+        if ($auth) return $auth;
+        static $own = false;
+        if ($own === false) {
+            $own = plugin_load('auth', $conf['authtype'] ?: 'authplain');
+        }
+        return $own;
+    }
+
+    /** getUserData through auth(), false when unknown */
+    public function userData(string $user)
+    {
+        $auth = $this->auth();
+        return $auth ? $auth->getUserData($user) : false;
+    }
+
     /** Display name for a wiki user */
     public function userName(string $user): string
     {
         static $cache = [];
         if (!isset($cache[$user])) {
-            global $auth;
-            $info = $auth ? $auth->getUserData($user) : false;
+            $info = $this->userData($user);
             $cache[$user] = $info && !empty($info['name']) ? $info['name'] : $user;
         }
         return $cache[$user];
@@ -70,8 +92,7 @@ class helper_plugin_wikilan extends Plugin
      */
     public function resolveLogin(string $name): string
     {
-        global $auth;
-        if ($auth && $auth->getUserData($name)) return $name;
+        if ($this->userData($name)) return $name;
         $known = array_merge(
             $this->getDB()->queryAll("SELECT DISTINCT user FROM lan_attendees"),
             $this->getDB()->queryAll("SELECT user FROM steam_links")

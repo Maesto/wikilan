@@ -175,7 +175,7 @@ class action_plugin_wikilan_manage extends ActionPlugin
         if ($isHost) {
             global $auth;
             $options = [];
-            foreach (($auth ? $auth->retrieveUsers(0, 0) : []) as $login => $info) {
+            foreach (($auth ? $auth->retrieveUsers(0, 0, []) : []) as $login => $info) {
                 if (in_array($login, $mods, true)) continue;
                 $options[$login] = $info['name'] ?: $login;
             }
@@ -200,22 +200,31 @@ class action_plugin_wikilan_manage extends ActionPlugin
         if ($lan) {
             foreach ($this->wl->attendees((int)$lan['id']) as $a) $cand[] = $a['user'];
         }
-        echo '<datalist id="wl-lm-cand">';
-        foreach (array_unique($cand) as $u) {
-            echo '<option value="' . hsc($u) . '">';
-        }
-        echo '</datalist>';
+        $cand = array_unique($cand);
+        usort($cand, fn($a, $b) => strcasecmp($this->wl->userName($a), $this->wl->userName($b)));
 
         echo '<div class="wl-lm-lobbies">';
         $rows = array_filter($this->lb->byEvent($pid), static fn($r) => !$r['group_id']);
         foreach ($rows as $row) {
-            $this->lobbyCard($row);
+            $this->lobbyCard($row, $cand);
         }
-        $this->lobbyCard(null); // blank "new lobby" card
+        $this->lobbyCard(null, $cand); // blank "new lobby" card
         echo '</div>';
     }
 
-    protected function lobbyCard(?array $row): void
+    /** placeholder + one option per candidate login, minus those excluded */
+    protected function playerSelect(string $class, array $cand, array $exclude): string
+    {
+        $html = '<select class="' . $class . '"><option value="">'
+            . hsc($this->lb->getLang('t_add_ph')) . '</option>';
+        foreach ($cand as $u) {
+            if (in_array($u, $exclude, true)) continue;
+            $html .= '<option value="' . hsc($u) . '">' . hsc($this->wl->userName($u)) . '</option>';
+        }
+        return $html . '</select>';
+    }
+
+    protected function lobbyCard(?array $row, array $cand = []): void
     {
         $lb = $this->lb;
         $new = $row === null;
@@ -234,15 +243,15 @@ class action_plugin_wikilan_manage extends ActionPlugin
             . hsc($lb->getLang('lob_public')) . '</label>';
 
         if (!$new) {
+            $players = $lb->players((int)$row['id']);
             echo '<div class="wl-lm-players"' . ($row['public'] ? ' hidden' : '') . '>';
             echo '<strong>' . hsc($lb->getLang('lob_players')) . ':</strong> ';
-            foreach ($lb->players((int)$row['id']) as $p) {
+            foreach ($players as $p) {
                 echo '<span class="wl-lm-player">' . hsc($this->wl->userName($p))
                     . '<button class="wl-lm-punassign" data-user="' . hsc($p) . '" title="'
                     . hsc($lb->getLang('t_remove')) . '">×</button></span> ';
             }
-            echo '<input class="wl-lm-passign" list="wl-lm-cand" placeholder="'
-                . hsc($lb->getLang('t_add_ph')) . '">'
+            echo $this->playerSelect('wl-lm-passign', $cand, $players)
                 . '<button class="wl-lm-passignbtn">+</button>';
             echo '</div>';
         }
@@ -334,12 +343,13 @@ class action_plugin_wikilan_manage extends ActionPlugin
         $live = $t['state'] === 'running';
 
         // add-player candidates: signed up but not placed in the current round
+        $candSelect = '';
         if ($live) {
             $placed = $th->usersInRound($tid, $current);
-            $cand = array_diff($this->wl->signups($t['event_pid'])['signedup'], $placed);
-            echo '<datalist id="wl-t-cand-' . $tid . '">';
-            foreach ($cand as $u) echo '<option value="' . hsc($u) . '">';
-            echo '</datalist>';
+            $cand = array_values(array_diff(
+                $this->wl->signups($t['event_pid'])['signedup'], $placed
+            ));
+            $candSelect = $this->playerSelect('wl-t-adduser', $cand, []);
         }
 
         echo '<div class="wl-t-rounds">';
@@ -356,9 +366,7 @@ class action_plugin_wikilan_manage extends ActionPlugin
                     $this->ffaGroup($t, $g, $groups, $editable);
                 }
                 if ($editable && strpos($g['name'], 'bye') !== 0) {
-                    echo '<div class="wl-t-addrow">'
-                        . '<input class="wl-t-adduser" list="wl-t-cand-' . $tid . '" placeholder="'
-                        . hsc($th->getLang('t_add_ph')) . '">'
+                    echo '<div class="wl-t-addrow">' . $candSelect
                         . '<button class="wl-t-add">' . hsc($th->getLang('t_add')) . '</button></div>';
                     $this->groupConnect($g);
                 }

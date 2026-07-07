@@ -72,10 +72,9 @@ class helper_plugin_wikilan_lobby extends Plugin
 
     public function setMod(string $neutralPid, string $user, bool $add): string
     {
-        global $auth;
         if ($add) {
             $user = $this->wl->resolveLogin(trim($user));
-            if (!$auth || !$auth->getUserData($user)) {
+            if (!$this->wl->userData($user)) {
                 return sprintf($this->getLang('t_unknown_user'), $user);
             }
             $this->db()->exec(
@@ -215,8 +214,7 @@ class helper_plugin_wikilan_lobby extends Plugin
         }
         if ($add) {
             $user = $this->wl->resolveLogin(trim($user));
-            global $auth;
-            if (!$auth || !$auth->getUserData($user)) {
+            if (!$this->wl->userData($user)) {
                 return sprintf($this->getLang('t_unknown_user'), $user);
             }
             $this->db()->exec(
@@ -302,23 +300,29 @@ class helper_plugin_wikilan_lobby extends Plugin
             $this->byEvent($neutralPid), static fn($r) => !$r['group_id']
         );
         if ($standalone) {
-            $out .= '===== ' . $L['lob_heading'] . " =====\n\n";
+            $out .= '===== ' . $L['lob_heading'] . " =====\n";
+            $out .= "<WRAP cardgrid center>\n";
             foreach ($standalone as $row) {
-                $line = '  * **' . $row['name'] . '**';
+                $head = str_replace(['^', '|'], ' ', $row['name']);
+                if ($row['code'] !== '' || $row['link'] !== '') {
+                    $head .= ' ~~LAN:connect ' . (int)$row['id'] . '~~';
+                }
+                $out .= "<WRAP>\n^ " . $head . " ^\n";
                 if ($row['public']) {
-                    $line .= ' — //' . $L['lob_public'] . '//';
+                    $out .= '| //' . $L['lob_public'] . "// |\n";
                 } else {
                     $players = $this->players((int)$row['id']);
-                    $line .= ' — ' . ($players
-                        ? implode(', ', array_map([$this->wl, 'userName'], $players))
-                        : '//' . $L['lob_private'] . '//');
+                    if ($players) {
+                        foreach ($players as $p) {
+                            $out .= '| ' . $this->cellName($p) . " |\n";
+                        }
+                    } else {
+                        $out .= '| //' . $L['lob_private'] . "// |\n";
+                    }
                 }
-                if ($row['code'] !== '' || $row['link'] !== '') {
-                    $line .= ' ~~LAN:connect ' . (int)$row['id'] . '~~';
-                }
-                $out .= $line . "\n";
+                $out .= "</WRAP>\n";
             }
-            $out .= "\n";
+            $out .= "</WRAP>\n\n";
         }
 
         /** @var helper_plugin_wikilan_tourney $th */
