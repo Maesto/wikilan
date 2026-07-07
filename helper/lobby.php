@@ -344,13 +344,18 @@ class helper_plugin_wikilan_lobby extends Plugin
                         $L['t_champion'], sprintf($L['t_team'], $res['team'])
                     ) . "**\\\\ " . implode(', ', array_map([$this->wl, 'userName'], $res['members'])) . "\n\n";
                 } elseif ($res) {
+                    // horizontal top-3 podium card, like the manage view
                     $medals = [1 => '🥇', 2 => '🥈', 3 => '🥉'];
-                    foreach ($res as $s) {
+                    $top = array_slice($res, 0, 3);
+                    $head = $row = '';
+                    foreach ($top as $s) {
                         $r = (int)$s['rank'];
-                        $out .= '  * ' . ($medals[$r] ?? '#' . $r) . ' '
-                            . $this->wl->userName($s['user']) . "\n";
+                        $head .= '^ ' . ($medals[$r] ?? '#' . $r) . ' ';
+                        $row .= '| **' . $this->cellName($s['user']) . '** ';
                     }
-                    $out .= "\n";
+                    $out .= "<WRAP cardgrid center>\n<WRAP>\n"
+                        . $head . "^\n" . $row . "|\n"
+                        . "</WRAP>\n</WRAP>\n\n";
                 }
             }
 
