@@ -214,3 +214,20 @@ $lang['lob_sync_summary'] = 'lobby/tournament update';
 
 $lang['js']['lob_confirm_delete'] = 'Delete this lobby?';
 $lang['js']['lob_connect']        = 'connect';
+
+// discord linking
+$lang['discord_fieldset']     = 'Discord';
+$lang['discord_not_linked']   = 'No Discord account linked.';
+$lang['discord_link_why']     = 'Linking lets others add you on Discord and lets the wiki send your notifications as Discord DMs.';
+$lang['discord_link']         = 'Link Discord account';
+$lang['discord_unlink']       = 'Unlink Discord account';
+$lang['discord_linked_as']    = 'Linked with Discord as %s';
+$lang['discord_view_profile'] = 'View Discord profile';
+$lang['discord_add_friend']   = 'Add on Discord';
+$lang['discord_notify_intro'] = 'Notifications (event reminders, changes, announcements) can be delivered as a Discord DM instead of browser push. The bot must share a server with you and your DMs must be open.';
+$lang['discord_notify_on']    = 'Notifications go to Discord';
+$lang['discord_notify_off']   = 'Notifications use browser push';
+$lang['discord_notify_enable']  = 'Send notifications via Discord';
+$lang['discord_notify_disable'] = 'Use browser push again';
+$lang['discord_notify_on_msg']  = 'Notifications will be sent as Discord DMs.';
+$lang['discord_notify_off_msg'] = 'Notifications will use browser push again.';

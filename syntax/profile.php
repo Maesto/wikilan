@@ -87,20 +87,38 @@ class syntax_plugin_wikilan_profile extends SyntaxPlugin
         if ($status !== '') {
             $renderer->doc .= '<div class="wl-profile-status">' . hsc($status) . '</div>';
         }
+        /** @var helper_plugin_wikilan_discord $dc */
+        $dc = plugin_load('helper', 'wikilan_discord');
+        $discord = $dc ? $dc->link($subject) : null;
+
+        $links = [];
         if ($steamid) {
-            $renderer->doc .= '<div class="wl-profile-links">'
-                . '<a class="wl-steam-deeplink" href="https://steamcommunity.com/profiles/'
+            $links[] = '<a class="wl-steam-deeplink" href="https://steamcommunity.com/profiles/'
                 . hsc($steamid) . '" target="_blank" rel="noopener">'
                 . hsc($wl->getLang('steam_view_profile')) . '</a>';
             if (!$own) {
-                $renderer->doc .= ' · <a class="wl-steam-deeplink" href="steam://friends/add/'
+                $links[] = '<a class="wl-steam-deeplink" href="steam://friends/add/'
                     . hsc($steamid) . '">' . hsc($wl->getLang('steam_add_friend')) . '</a>';
             }
-            $renderer->doc .= '</div>';
         } elseif ($own) {
-            $renderer->doc .= '<a class="wl-steam-deeplink" href="'
+            $links[] = '<a class="wl-steam-deeplink" href="'
                 . wl($ID, ['do' => 'wikilan_steam'], false, '&amp;') . '">'
                 . hsc($wl->getLang('steam_link')) . '</a>';
+        }
+        if ($discord) {
+            $label = $own
+                ? sprintf($wl->getLang('discord_linked_as'), $dc->displayName($discord))
+                : $wl->getLang('discord_add_friend');
+            $links[] = '<a class="wl-discord-deeplink" href="https://discord.com/users/'
+                . hsc($discord['discord_id']) . '" target="_blank" rel="noopener">'
+                . hsc($label) . '</a>';
+        } elseif ($own) {
+            $links[] = '<a class="wl-discord-deeplink" href="'
+                . wl($ID, ['do' => 'wikilan_discord'], false, '&amp;') . '">'
+                . hsc($wl->getLang('discord_link')) . '</a>';
+        }
+        if ($links) {
+            $renderer->doc .= '<div class="wl-profile-links">' . implode(' · ', $links) . '</div>';
         }
         $renderer->doc .= '</div>';
 

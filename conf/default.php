@@ -19,3 +19,6 @@ $conf['strichliste_db_host'] = ''; // read-only MySQL for payment reconciliation
 $conf['strichliste_db_name'] = ''; // empty = reuse the sqlquery plugin's settings
 $conf['strichliste_db_user'] = '';
 $conf['strichliste_db_pass'] = '';
+$conf['discordclientid']  = ''; // Discord application OAuth2 client id
+$conf['discordclientkey'] = ''; // Discord application OAuth2 client secret
+$conf['discordbottoken']  = ''; // bot token for DM notification delivery

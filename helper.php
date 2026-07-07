@@ -1359,10 +1359,14 @@ class helper_plugin_wikilan extends Plugin
         }
     }
 
-    /** Queue a push for every user who has at least one subscription */
+    /** Queue a push for every reachable user (web push subscription or Discord DM opt-in) */
     public function queuePushBroadcast(?string $key, array $payload): int
     {
-        $users = $this->getDB()->queryAll("SELECT DISTINCT user FROM push_subscriptions");
+        $users = $this->getDB()->queryAll(
+            "SELECT user FROM push_subscriptions
+              UNION
+             SELECT user FROM discord_links WHERE notify = 1"
+        );
         foreach ($users as $u) {
             $this->queuePush($u['user'], $key ? $key . ':' . $u['user'] : null, $payload);
         }

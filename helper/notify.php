@@ -141,6 +141,8 @@ class helper_plugin_wikilan_notify extends Plugin
         $db = $wl->getDB();
         /** @var helper_plugin_wikilan_push $push */
         $push = plugin_load('helper', 'wikilan_push');
+        /** @var helper_plugin_wikilan_discord $discord */
+        $discord = plugin_load('helper', 'wikilan_discord');
 
         $rows = $db->queryAll(
             "SELECT * FROM push_outbox WHERE state = 'pending' AND tries < 3 ORDER BY id LIMIT ?",
@@ -148,6 +150,25 @@ class helper_plugin_wikilan_notify extends Plugin
         );
         $sent = 0;
         foreach ($rows as $row) {
+            $payload = json_decode($row['payload'], true) ?: [];
+
+            // Discord DM instead of web push when the user opted in
+            $link = $discord ? $discord->link($row['user']) : null;
+            if ($link && (int)$link['notify'] === 1) {
+                if ($discord->sendDM($link, $discord->formatPayload($payload))) {
+                    $db->exec("UPDATE push_outbox SET state = 'sent' WHERE id = ?", $row['id']);
+                    $sent++;
+                } else {
+                    $db->exec(
+                        "UPDATE push_outbox SET tries = tries + 1,
+                                state = CASE WHEN tries + 1 >= 3 THEN 'failed' ELSE 'pending' END
+                          WHERE id = ?",
+                        $row['id']
+                    );
+                }
+                continue;
+            }
+
             $subs = $db->queryAll(
                 "SELECT * FROM push_subscriptions WHERE user = ?",
                 $row['user']
@@ -157,7 +178,6 @@ class helper_plugin_wikilan_notify extends Plugin
                 $db->exec("UPDATE push_outbox SET state = 'sent' WHERE id = ?", $row['id']);
                 continue;
             }
-            $payload = json_decode($row['payload'], true) ?: [];
             $allOk = true;
             foreach ($subs as $sub) {
                 try {

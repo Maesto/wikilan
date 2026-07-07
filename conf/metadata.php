@@ -19,3 +19,6 @@ $meta['strichliste_db_host'] = ['string'];
 $meta['strichliste_db_name'] = ['string'];
 $meta['strichliste_db_user'] = ['string'];
 $meta['strichliste_db_pass'] = ['password'];
+$meta['discordclientid']  = ['string'];
+$meta['discordclientkey'] = ['password'];
+$meta['discordbottoken']  = ['password'];

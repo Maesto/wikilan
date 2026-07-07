@@ -40,6 +40,13 @@ lib/plugins/wikilan/ and running the install CLI command below.
                                 all-time (limit=, alltime=0, user= for a
                                 one-line personal summary)
 
+?do=wikilan_discord (User Tools → Discord) links a Discord account via
+OAuth2 (identify scope; register <site>/doku.php?do=wikilan_discordcb as
+the app's redirect). Linked users get an "Add on Discord" button on their
+profile and can opt to receive notifications as Discord DMs from the
+configured bot instead of browser push (the bot must share a server with
+them). Conf: discordclientid, discordclientkey, discordbottoken.
+
 ?do=wikilan_manage (any page) is the global event-management view: edition
 picker, overview of the events the viewer may manage, per-event detail with
 moderators (hosts appoint them), lobbies (name / code / connect link /

@@ -205,3 +205,20 @@ $lang['lob_sync_summary'] = 'Lobby-/Turnier-Update';
 
 $lang['js']['lob_confirm_delete'] = 'Diese Lobby löschen?';
 $lang['js']['lob_connect']        = 'verbinden';
+
+// Discord-Verknüpfung
+$lang['discord_fieldset']     = 'Discord';
+$lang['discord_not_linked']   = 'Kein Discord-Account verknüpft.';
+$lang['discord_link_why']     = 'Mit der Verknüpfung können dich andere auf Discord hinzufügen und das Wiki kann dir Benachrichtigungen als Discord-DM schicken.';
+$lang['discord_link']         = 'Discord-Account verknüpfen';
+$lang['discord_unlink']       = 'Discord-Verknüpfung lösen';
+$lang['discord_linked_as']    = 'Mit Discord verknüpft als %s';
+$lang['discord_view_profile'] = 'Discord-Profil ansehen';
+$lang['discord_add_friend']   = 'Auf Discord hinzufügen';
+$lang['discord_notify_intro'] = 'Benachrichtigungen (Event-Erinnerungen, Änderungen, Ansagen) können als Discord-DM statt als Browser-Push zugestellt werden. Der Bot muss mit dir auf einem Server sein und deine DMs müssen offen sein.';
+$lang['discord_notify_on']    = 'Benachrichtigungen gehen an Discord';
+$lang['discord_notify_off']   = 'Benachrichtigungen nutzen Browser-Push';
+$lang['discord_notify_enable']  = 'Benachrichtigungen per Discord senden';
+$lang['discord_notify_disable'] = 'Wieder Browser-Push nutzen';
+$lang['discord_notify_on_msg']  = 'Benachrichtigungen kommen ab jetzt als Discord-DM.';
+$lang['discord_notify_off_msg'] = 'Benachrichtigungen nutzen wieder Browser-Push.';
