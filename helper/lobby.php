@@ -354,37 +354,99 @@ class helper_plugin_wikilan_lobby extends Plugin
                 }
             }
 
+            // one row of boxes per round: each lobby/match is a small table,
+            // laid out side by side by CSS; advancers are bold + ✓
             foreach ($th->rounds($t) as $round => $groups) {
                 $out .= '==== ' . sprintf($L['t_round'], $round) . " ====\n\n";
                 foreach ($groups as $g) {
-                    $out .= '**' . $this->groupLabelIn($L, $g['name']) . '**';
-                    $conn = $this->forGroup((int)$g['id']);
-                    if ($conn && ($conn['code'] !== '' || $conn['link'] !== '')) {
-                        $out .= ' ~~LAN:connect ' . (int)$conn['id'] . '~~';
-                    }
-                    $out .= "\n";
-                    if ($t['mode'] === 'teams') {
-                        $teams = [];
-                        foreach ($g['slots'] as $s) $teams[$s['team']][] = $s;
-                        foreach ($teams as $team => $slots) {
-                            $won = (int)($slots[0]['rank'] ?? 0) === 1;
-                            $out .= '  * **' . sprintf($L['t_team'], $team) . '**'
-                                . ($won ? ' ✓' : '') . ': '
-                                . implode(', ', array_map(
-                                    fn($s) => $this->wl->userName($s['user']), $slots
-                                )) . "\n";
-                        }
-                    } else {
-                        foreach ($g['slots'] as $s) {
-                            $out .= '  * ' . ($s['rank'] !== null ? '#' . (int)$s['rank'] . ' ' : '')
-                                . $this->wl->userName($s['user']) . "\n";
-                        }
-                    }
+                    $out .= $t['mode'] === 'teams'
+                        ? $this->teamTable($L, $g)
+                        : $this->ffaTable($L, $t, $g, count($groups) === 1);
                     $out .= "\n";
                 }
             }
         }
         return rtrim($out);
+    }
+
+    /** display name sanitized for use inside wiki table cells */
+    protected function cellName(string $user): string
+    {
+        return str_replace(['^', '|'], ' ', $this->wl->userName($user));
+    }
+
+    /** group header cell: label + optional connect placeholder */
+    protected function groupHeader(array $L, array $g): string
+    {
+        $head = $this->groupLabelIn($L, $g['name']);
+        $conn = $this->forGroup((int)$g['id']);
+        if ($conn && ($conn['code'] !== '' || $conn['link'] !== '')) {
+            $head .= ' ~~LAN:connect ' . (int)$conn['id'] . '~~';
+        }
+        return $head;
+    }
+
+    /**
+     * One lobby as a single-column table. In non-final rounds the players
+     * currently in the advancing ranks (same pick as advance()) are marked
+     * bold + ✓; the final lobby's podium is shown separately once done.
+     */
+    protected function ffaTable(array $L, array $t, array $g, bool $isFinal): string
+    {
+        $advancing = [];
+        if (!$isFinal) {
+            $ranked = array_values(array_filter(
+                $g['slots'], static fn($s) => $s['rank'] !== null
+            ));
+            $need = min((int)$t['advance'], count($g['slots']));
+            foreach (array_slice($ranked, 0, $need) as $s) {
+                $advancing[(int)$s['id']] = true;
+            }
+        }
+        $out = '^ ' . $this->groupHeader($L, $g) . " ^\n";
+        foreach ($g['slots'] as $s) {
+            $cell = ($s['rank'] !== null ? '#' . (int)$s['rank'] . ' ' : '')
+                . $this->cellName($s['user']);
+            if (isset($advancing[(int)$s['id']])) {
+                $cell = '**' . $cell . '** ✓';
+            }
+            $out .= '| ' . $cell . " |\n";
+        }
+        return $out;
+    }
+
+    /**
+     * One match as a table with a column per team (spanning title row);
+     * the winning team's column is marked in the header and bold.
+     */
+    protected function teamTable(array $L, array $g): string
+    {
+        $teams = [];
+        foreach ($g['slots'] as $s) $teams[$s['team']][] = $s;
+        $names = array_keys($teams);
+        $span = count($names);
+
+        $out = '^ ' . $this->groupHeader($L, $g) . ' ' . str_repeat('^', $span) . "\n";
+        $won = [];
+        $head = '';
+        foreach ($names as $team) {
+            $won[$team] = (int)($teams[$team][0]['rank'] ?? 0) === 1;
+            $head .= '^ ' . sprintf($L['t_team'], $team) . ($won[$team] ? ' ✓' : '') . ' ';
+        }
+        $out .= $head . "^\n";
+        $rows = max(array_map('count', $teams));
+        for ($i = 0; $i < $rows; $i++) {
+            $out .= '|';
+            foreach ($names as $team) {
+                $cell = isset($teams[$team][$i])
+                    ? $this->cellName($teams[$team][$i]['user'])
+                    : '';
+                if ($cell !== '' && $won[$team]) $cell = '**' . $cell . '** ✓';
+                $out .= ' ' . $cell . ' |';
+            }
+            $out .= "\n";
+        }
+        return $out;
     }
 
     /**
