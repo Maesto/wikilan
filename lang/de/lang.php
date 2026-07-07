@@ -175,3 +175,33 @@ $lang['js']['t_confirm_advance'] = 'Diese Runde abschließen und die Qualifizier
 $lang['js']['t_confirm_finish']  = 'Das Turnier mit den aktuellen Platzierungen beenden?';
 $lang['js']['t_confirm_delete']  = 'Dieses Turnier inklusive aller Gruppen und Ergebnisse löschen?';
 $lang['js']['t_confirm_winner']  = 'Dieses Team als Sieger des Matches eintragen?';
+
+// Lobby-Verwaltung
+$lang['lm_title']         = 'Event-Verwaltung';
+$lang['lm_manage_link']   = 'Verwalten';
+$lang['lm_no_events']     = 'Keine Events in dieser Ausgabe, die du verwalten kannst.';
+$lang['lm_event']         = 'Event';
+$lang['lm_when']          = 'Wann';
+$lang['lm_back']          = 'Alle Events';
+$lang['lm_mods']          = 'Moderatoren';
+$lang['lm_mods_hint']     = 'Moderatoren können Lobbys und das Turnier dieses Events verwalten.';
+$lang['lm_host_only']     = 'Nur Event-Hosts können die Moderatorenliste ändern.';
+$lang['lob_heading']      = 'Lobbys';
+$lang['lob_lobby']        = 'Lobby';
+$lang['lob_new']          = 'Neue Lobby';
+$lang['lob_name']         = 'Name';
+$lang['lob_code']         = 'Lobby-Code';
+$lang['lob_link']         = 'Connect-Link';
+$lang['lob_public']       = 'öffentlich';
+$lang['lob_private']      = 'privat';
+$lang['lob_players']      = 'Spieler';
+$lang['lob_create']       = 'Lobby anlegen';
+$lang['lob_save']         = 'Speichern';
+$lang['lob_delete']       = 'Löschen';
+$lang['lob_copy']         = 'Code kopieren';
+$lang['lob_bad_link']     = 'Connect-Links müssen mit steam://, http:// oder https:// beginnen.';
+$lang['lob_name_missing'] = 'Die Lobby braucht einen Namen.';
+$lang['lob_sync_summary'] = 'Lobby-/Turnier-Update';
+
+$lang['js']['lob_confirm_delete'] = 'Diese Lobby löschen?';
+$lang['js']['lob_connect']        = 'verbinden';

@@ -184,3 +184,33 @@ $lang['js']['t_confirm_advance'] = 'Close this round and advance the qualifiers?
 $lang['js']['t_confirm_finish']  = 'Finish the tournament with the current placements?';
 $lang['js']['t_confirm_delete']  = 'Delete this tournament including all groups and results?';
 $lang['js']['t_confirm_winner']  = 'Mark this team as the winner of the match?';
+
+// lobby management
+$lang['lm_title']         = 'Event management';
+$lang['lm_manage_link']   = 'Manage';
+$lang['lm_no_events']     = 'No events you can manage in this edition.';
+$lang['lm_event']         = 'Event';
+$lang['lm_when']          = 'When';
+$lang['lm_back']          = 'All events';
+$lang['lm_mods']          = 'Moderators';
+$lang['lm_mods_hint']     = 'Moderators can manage lobbies and the tournament of this event.';
+$lang['lm_host_only']     = 'Only event hosts can change the moderator list.';
+$lang['lob_heading']      = 'Lobbies';
+$lang['lob_lobby']        = 'Lobby';
+$lang['lob_new']          = 'New lobby';
+$lang['lob_name']         = 'Name';
+$lang['lob_code']         = 'Lobby code';
+$lang['lob_link']         = 'Connect link';
+$lang['lob_public']       = 'public';
+$lang['lob_private']      = 'private';
+$lang['lob_players']      = 'Players';
+$lang['lob_create']       = 'Create lobby';
+$lang['lob_save']         = 'Save';
+$lang['lob_delete']       = 'Delete';
+$lang['lob_copy']         = 'Copy code';
+$lang['lob_bad_link']     = 'Connect links must start with steam://, http:// or https://.';
+$lang['lob_name_missing'] = 'The lobby needs a name.';
+$lang['lob_sync_summary'] = 'lobby/tournament update';
+
+$lang['js']['lob_confirm_delete'] = 'Delete this lobby?';
+$lang['js']['lob_connect']        = 'connect';

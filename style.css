@@ -334,3 +334,75 @@ ul.wl-t-slots .wl-user-avatar { width: 24px; height: 24px; }
 .wl-t-champion { font-size: 115%; font-weight: bold; margin: 0 0 0.3em; }
 .wl-t-medal { font-size: 130%; margin-right: 0.3em; }
 .wl-t-createbox label { margin-right: 0.8em; }
+
+/* ---------------------------------------------------------- lobbies & manage page */
+
+.wl-connect { display: inline-flex; align-items: center; gap: 0.25em; margin-left: 0.4em; }
+.wl-connect .wl-code {
+    background: __background_alt__;
+    border: 1px dashed __border__;
+    border-radius: 4px;
+    padding: 0 0.35em;
+    letter-spacing: 0.05em;
+}
+.wl-connect .wl-copy {
+    border: 1px solid __border__;
+    border-radius: 4px;
+    background: none;
+    cursor: pointer;
+    padding: 0 0.3em;
+    line-height: 1.3;
+}
+.wl-connect .wl-clink { font-weight: bold; }
+
+.wl-lobbies .wl-manage-link { text-align: right; margin: 0; font-size: 90%; }
+
+.wl-managepage h2 { margin-top: 0.3em; }
+.wl-lm-overview td, .wl-lm-overview th { padding: 0.3em 0.8em; }
+.wl-lm-mod, .wl-lm-player {
+    display: inline-flex;
+    align-items: center;
+    border: 1px solid __border__;
+    border-radius: 12px;
+    padding: 0.05em 0.5em;
+    margin: 0 0.2em 0.2em 0;
+    background: __background_alt__;
+}
+.wl-lm-moddel, .wl-lm-punassign {
+    border: none;
+    background: none;
+    color: #b33;
+    cursor: pointer;
+    padding: 0 0 0 0.25em;
+}
+
+.wl-lm-lobbies { display: flex; flex-wrap: wrap; gap: 1em; align-items: flex-start; }
+.wl-lm-lobby {
+    flex: 1 1 20em;
+    min-width: 18em;
+    max-width: 28em;
+    border: 1px solid __border__;
+    border-radius: 6px;
+    background: __background_alt__;
+    padding: 0.6em 0.9em;
+}
+.wl-lm-lobby h4 { margin: 0 0 0.4em; }
+.wl-lm-lobby label { display: block; margin-bottom: 0.35em; }
+.wl-lm-lobby label input:not([type=checkbox]) { width: 100%; box-sizing: border-box; }
+.wl-lm-lobby .wl-lm-publabel { display: flex; align-items: center; gap: 0.35em; }
+.wl-lm-players { margin: 0.4em 0; }
+.wl-lm-players .wl-lm-passign { max-width: 11em; }
+.wl-lm-lobbybtns { display: flex; gap: 0.5em; margin-top: 0.5em; }
+.wl-lm-lobbybtns .wl-lm-delete { margin-left: auto; color: #b33; }
+.wl-lm-new { border-style: dashed; }
+
+.wl-t-conn {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.3em;
+    align-items: center;
+    margin-top: 0.4em;
+    padding-top: 0.4em;
+    border-top: 1px dotted __border__;
+}
+.wl-t-conn input:not([type=checkbox]) { flex: 1 1 7em; min-width: 6em; }

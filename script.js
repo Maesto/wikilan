@@ -634,14 +634,137 @@
                     team: el.closest('.wl-t-team').dataset.team
                 }, 't_confirm_winner');
             });
-            on('.wl-t-orgaadd', 'click', function (el) {
-                var input = box.querySelector('.wl-t-orgauser');
-                if (!input.value.trim()) return;
-                post('tourney_orga', { user: input.value.trim(), add: 1 });
+            // connect info (code/link/public) on a current-round group
+            on('.wl-t-connsave', 'click', function (el) {
+                var row = el.closest('.wl-t-conn');
+                post('lobby_save', {
+                    event: box.closest('.wl-lm') ? box.closest('.wl-lm').dataset.event : box.dataset.event,
+                    group: el.closest('.wl-t-group').dataset.group,
+                    code: row.querySelector('.wl-lm-code').value.trim(),
+                    link: row.querySelector('.wl-lm-link').value.trim(),
+                    public: row.querySelector('.wl-lm-public').checked ? 1 : 0
+                });
             });
-            on('.wl-t-orgadel', 'click', function (el) {
-                post('tourney_orga', { user: el.dataset.user, add: 0 });
+        });
+    }
+
+    /* ------------------------------------------------------------ lobby management page */
+
+    function initManage() {
+        document.querySelectorAll('.wl-lm').forEach(function (box) {
+            var ev = box.dataset.event;
+            function post(fn, data) {
+                data = data || {};
+                data.event = ev;
+                ajax(fn, data, 'POST').then(function (res) {
+                    if (res.error) return toast('', res.error, 'error');
+                    location.reload();
+                });
+            }
+
+            box.querySelectorAll('.wl-lm-modadd').forEach(function (btn) {
+                btn.addEventListener('click', function () {
+                    var input = box.querySelector('.wl-lm-moduser');
+                    if (input.value.trim()) post('event_mod', { user: input.value.trim(), add: 1 });
+                });
             });
+            box.querySelectorAll('.wl-lm-moddel').forEach(function (btn) {
+                btn.addEventListener('click', function () {
+                    post('event_mod', { user: btn.dataset.user, add: 0 });
+                });
+            });
+
+            box.querySelectorAll('.wl-lm-lobby').forEach(function (card) {
+                var save = card.querySelector('.wl-lm-save');
+                if (save) save.addEventListener('click', function () {
+                    post('lobby_save', {
+                        id: card.dataset.id || 0,
+                        name: card.querySelector('.wl-lm-name').value.trim(),
+                        code: card.querySelector('.wl-lm-code').value.trim(),
+                        link: card.querySelector('.wl-lm-link').value.trim(),
+                        public: card.querySelector('.wl-lm-public').checked ? 1 : 0
+                    });
+                });
+                var del = card.querySelector('.wl-lm-delete');
+                if (del) del.addEventListener('click', function () {
+                    if (!window.confirm(lstr('lob_confirm_delete'))) return;
+                    post('lobby_delete', { id: card.dataset.id });
+                });
+                // toggling public hides the assignment list until saved
+                var pub = card.querySelector('.wl-lm-public');
+                var players = card.querySelector('.wl-lm-players');
+                if (pub && players) pub.addEventListener('change', function () {
+                    players.hidden = pub.checked;
+                });
+                var assign = card.querySelector('.wl-lm-passignbtn');
+                if (assign) assign.addEventListener('click', function () {
+                    var input = card.querySelector('.wl-lm-passign');
+                    if (input.value.trim()) post('lobby_assign', {
+                        id: card.dataset.id, user: input.value.trim(), add: 1
+                    });
+                });
+                card.querySelectorAll('.wl-lm-punassign').forEach(function (btn) {
+                    btn.addEventListener('click', function () {
+                        post('lobby_assign', { id: card.dataset.id, user: btn.dataset.user, add: 0 });
+                    });
+                });
+            });
+        });
+    }
+
+    /* ------------------------------------------------------------ event-page lobby block */
+
+    function initLobbies() {
+        document.querySelectorAll('.wl-lobbies').forEach(function (box) {
+            var ev = box.dataset.event;
+            var page = box.dataset.page;
+
+            function fillConnect(map) {
+                box.querySelectorAll('.wl-connect').forEach(function (span) {
+                    var d = map[span.dataset.lobby];
+                    var code = span.querySelector('.wl-code');
+                    var copy = span.querySelector('.wl-copy');
+                    var link = span.querySelector('.wl-clink');
+                    if (d && d.code) {
+                        code.textContent = d.code;
+                        code.hidden = false;
+                        copy.hidden = false;
+                        copy.onclick = function () {
+                            navigator.clipboard.writeText(d.code).then(function () {
+                                copy.textContent = '✓';
+                                setTimeout(function () { copy.textContent = '⧉'; }, 1200);
+                            });
+                        };
+                    } else {
+                        code.hidden = copy.hidden = true;
+                    }
+                    if (d && d.link) {
+                        link.href = d.link;
+                        link.textContent = lstr('lob_connect');
+                        link.hidden = false;
+                    } else {
+                        link.hidden = true;
+                    }
+                });
+            }
+
+            function poll() {
+                ajax('lobby_block', { event: ev, page: page, hash: box.dataset.hash || '' })
+                    .then(function (res) {
+                        if (res.error) return;
+                        if (res.html !== undefined) {
+                            box.querySelector('.wl-lobbies-body').innerHTML = res.html;
+                            box.dataset.hash = res.hash;
+                        }
+                        fillConnect(res.connect || {});
+                    });
+            }
+
+            poll();
+            if (box.dataset.live === '1') {
+                setInterval(poll, 20000);
+                window.addEventListener('focus', poll);
+            }
         });
     }
 
@@ -652,5 +775,7 @@
         initButtons();
         initSharedGames();
         initTournament();
+        initManage();
+        initLobbies();
     });
 })();

@@ -47,40 +47,6 @@ class helper_plugin_wikilan_tourney extends Plugin
         return $this->db()->queryRecord("SELECT * FROM tourneys WHERE id = ?", $id) ?: null;
     }
 
-    /** explicit orga list (without creator/mods) */
-    public function orgas(int $id): array
-    {
-        return array_column($this->db()->queryAll(
-            "SELECT user FROM tourney_orgas WHERE tourney_id = ? ORDER BY user", $id
-        ), 'user');
-    }
-
-    public function isOrga(?array $t, string $user): bool
-    {
-        if ($user === '') return false;
-        if ($this->wl->isMod()) return true;
-        if (!$t) return false;
-        if ($t['created_by'] === $user) return true;
-        return in_array($user, $this->orgas((int)$t['id']), true);
-    }
-
-    /**
-     * Mods always; otherwise anyone listed in the event's struct `host`
-     * field (matched case-insensitively against login and display name).
-     */
-    public function canCreate(string $neutralPid, string $user): bool
-    {
-        if ($user === '') return false;
-        if ($this->wl->isMod()) return true;
-        $local = $this->wl->localPage($neutralPid);
-        $data = $local ? ($this->wl->structData($local) ?? []) : [];
-        $host = mb_strtolower(trim((string)($data['host'] ?? '')));
-        if ($host === '') return false;
-        $tokens = preg_split('/[,\/&+\s]+/u', $host, -1, PREG_SPLIT_NO_EMPTY);
-        return in_array(mb_strtolower($user), $tokens, true)
-            || in_array(mb_strtolower($this->wl->userName($user)), $tokens, true);
-    }
-
     /** groups of one round, each with its slots (ordered by rank, then id) */
     public function groups(int $tid, int $round): array
     {
@@ -156,34 +122,23 @@ class helper_plugin_wikilan_tourney extends Plugin
 
     public function delete(int $tid): void
     {
+        $this->dropGroupLobbies($tid);
         $this->db()->exec(
             "DELETE FROM tourney_slots WHERE group_id IN
              (SELECT id FROM tourney_groups WHERE tourney_id = ?)", $tid
         );
         $this->db()->exec("DELETE FROM tourney_groups WHERE tourney_id = ?", $tid);
-        $this->db()->exec("DELETE FROM tourney_orgas WHERE tourney_id = ?", $tid);
         $this->db()->exec("DELETE FROM tourneys WHERE id = ?", $tid);
     }
 
-    public function setOrga(int $tid, string $user, bool $add): string
+    /** connect-info rows attached to this tournament's groups */
+    protected function dropGroupLobbies(int $tid): void
     {
-        global $auth;
-        if ($add) {
-            $user = $this->wl->resolveLogin($user);
-            if (!$auth || !$auth->getUserData($user)) {
-                return sprintf($this->getLang('t_unknown_user'), $user);
-            }
-            $this->db()->exec(
-                "INSERT OR IGNORE INTO tourney_orgas (tourney_id, user) VALUES (?, ?)",
-                $tid, $user
-            );
-        } else {
-            $this->db()->exec(
-                "DELETE FROM tourney_orgas WHERE tourney_id = ? AND user = ?",
-                $tid, $user
-            );
-        }
-        return '';
+        /** @var helper_plugin_wikilan_lobby $lb */
+        $lb = plugin_load('helper', 'wikilan_lobby');
+        $lb->deleteForGroups(array_column($this->db()->queryAll(
+            "SELECT id FROM tourney_groups WHERE tourney_id = ?", $tid
+        ), 'id'));
     }
 
     /**
@@ -205,7 +160,8 @@ class helper_plugin_wikilan_tourney extends Plugin
         if (count($players) < 2) return $this->getLang('t_too_few');
         shuffle($players);
 
-        // wipe any previous seeding
+        // wipe any previous seeding (incl. connect info on wiped groups)
+        $this->dropGroupLobbies($tid);
         $this->db()->exec(
             "DELETE FROM tourney_slots WHERE group_id IN
              (SELECT id FROM tourney_groups WHERE tourney_id = ?)", $tid

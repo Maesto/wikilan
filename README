@@ -10,14 +10,19 @@ lib/plugins/wikilan/ and running the install CLI command below.
                                 (show=both|plan|table for split layouts)
   ~~LAN:calendar~~              fahrplan-style event calendar (struct-backed)
   ~~LAN:eventsignup~~           interested/signed-up buttons on event pages
-  ~~LAN:tournament~~            bracket on an event page: seeds signups into
-                                lobbies (top-N advance until a final) or
-                                teams (single elimination); organizers (mods,
-                                creator, per-tournament orga list, event
-                                hosts) enter results, move players between
-                                groups and advance rounds
-                                (mode=ffa|teams size= advance= preset the
-                                create form)
+  ~~LAN:lobbies~~ … ~~LAN:lobbies-end~~
+                                managed block on event pages: the wiki text
+                                between the markers is regenerated (minor
+                                edits) from lobby + tournament state on every
+                                change, so pages stay real, history-friendly
+                                wiki content; JS live-refreshes the block
+                                while the LAN is live
+  ~~LAN:connect <id>~~          per-viewer connect-info placeholder inside
+                                the managed block: lobby code (with copy
+                                button) and steam://|https:// link are ONLY
+                                delivered via AJAX — public lobbies to any
+                                logged-in user, private ones to assigned
+                                players / bracket-group members and managers
   ~~LAN:notify~~                embedded notice feed (room display)
   ~~LAN:when~~                  inline schedule date, localized to the page
                                 language (buildup|start|end, date|time|datetime)
@@ -34,6 +39,14 @@ lib/plugins/wikilan/ and running the install CLI command below.
                                 context LAN's window (buildup→end) and
                                 all-time (limit=, alltime=0, user= for a
                                 one-line personal summary)
+
+?do=wikilan_manage (any page) is the global event-management view: edition
+picker, overview of the events the viewer may manage, per-event detail with
+moderators (hosts appoint them), lobbies (name / code / connect link /
+public flag / assigned players) and the full tournament bracket (create,
+seed signups into lobbies or teams, enter placements / match winners, move
+players between groups, advance rounds). Managers = wiki mods + struct-host
+matches (hosts) + appointed event moderators.
 
 All modules take lan=<neutral ns> (default: edition derived from the page id,
 else the active LAN). Seating takes plan=<media id> to override the LAN's SVG.

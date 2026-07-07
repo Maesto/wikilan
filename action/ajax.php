@@ -113,6 +113,30 @@ class action_plugin_wikilan_ajax extends ActionPlugin
                     $out[] = ['user' => $u, 'name' => $wl->userName($u)];
                 }
                 return ['users' => $out];
+
+            case 'lobby_block': {
+                // per-viewer connect info + live refresh of the managed block:
+                // html only travels when the client's hash is stale
+                if ($user === '') {
+                    http_status(403);
+                    return ['error' => $wl->getLang('login_required')];
+                }
+                /** @var helper_plugin_wikilan_lobby $lb */
+                $lb = plugin_load('helper', 'wikilan_lobby');
+                $pid = $wl->neutralId($INPUT->str('event'));
+                $lang = $wl->pageLang($INPUT->str('page'));
+                $markup = $lb->markup($pid, $lang);
+                $hash = md5($markup);
+                $out = [
+                    'hash' => $hash,
+                    'connect' => $lb->connectFor($pid, $user),
+                ];
+                if ($INPUT->str('hash') !== $hash) {
+                    $info = [];
+                    $out['html'] = p_render('xhtml', p_get_instructions($markup), $info);
+                }
+                return $out;
+            }
         }
 
         // everything below mutates state
@@ -286,14 +310,18 @@ class action_plugin_wikilan_ajax extends ActionPlugin
         if (strpos($fn, 'tourney_') === 0) {
             return $this->tourney($fn, $user);
         }
+        if (strpos($fn, 'lobby_') === 0 || $fn === 'event_mod') {
+            return $this->lobby($fn, $user);
+        }
 
         http_status(404);
         return ['error' => 'unknown fn'];
     }
 
     /**
-     * Tournament mutations. Creation is gated by canCreate (mods + event
-     * hosts); everything else by the organizer check. Helpers return '' on
+     * Tournament mutations, gated by the event manager check (hosts +
+     * event moderators + wiki mods). Every successful mutation re-writes
+     * the managed block on the event's wiki pages. Helpers return '' on
      * success or a localized error message.
      */
     protected function tourney(string $fn, string $user): array
@@ -301,10 +329,12 @@ class action_plugin_wikilan_ajax extends ActionPlugin
         global $INPUT;
         /** @var helper_plugin_wikilan_tourney $th */
         $th = plugin_load('helper', 'wikilan_tourney');
+        /** @var helper_plugin_wikilan_lobby $lb */
+        $lb = plugin_load('helper', 'wikilan_lobby');
 
         if ($fn === 'tourney_create') {
             $pid = $this->wl->neutralId($INPUT->str('event'));
-            if (!$th->canCreate($pid, $user)) {
+            if (!$lb->canManage($pid, $user)) {
                 http_status(403);
                 return ['error' => $th->getLang('t_not_orga')];
             }
@@ -320,7 +350,7 @@ class action_plugin_wikilan_ajax extends ActionPlugin
 
         $tid = $INPUT->int('tid');
         $t = $th->get($tid);
-        if (!$t || !$th->isOrga($t, $user)) {
+        if (!$t || !$lb->canManage($t['event_pid'], $user)) {
             http_status(403);
             return ['error' => $th->getLang('t_not_orga')];
         }
@@ -354,14 +384,73 @@ class action_plugin_wikilan_ajax extends ActionPlugin
             case 'tourney_remove':
                 $err = $th->removePlayer($tid, $INPUT->int('slot'));
                 break;
-            case 'tourney_orga':
-                $err = $th->setOrga($tid, trim($INPUT->str('user')), $INPUT->bool('add'));
+            default:
+                http_status(404);
+                return ['error' => 'unknown fn'];
+        }
+        if ($err === '') {
+            $lb->syncPages($t['event_pid']);
+            return ['ok' => true];
+        }
+        return ['error' => $err];
+    }
+
+    /**
+     * Lobby & event-moderator mutations (manager-gated; moderator list is
+     * host-only). Structural changes re-materialize the event pages —
+     * code/link-only edits don't touch wiki text by design.
+     */
+    protected function lobby(string $fn, string $user): array
+    {
+        global $INPUT;
+        /** @var helper_plugin_wikilan_lobby $lb */
+        $lb = plugin_load('helper', 'wikilan_lobby');
+        $pid = $this->wl->neutralId($INPUT->str('event'));
+        if (!$lb->canManage($pid, $user)) {
+            http_status(403);
+            return ['error' => $lb->getLang('t_not_orga')];
+        }
+
+        switch ($fn) {
+            case 'lobby_save':
+                $err = $lb->save($pid, [
+                    'id' => $INPUT->int('id'),
+                    'group' => $INPUT->int('group'),
+                    'name' => $INPUT->str('name'),
+                    'code' => $INPUT->str('code'),
+                    'link' => $INPUT->str('link'),
+                    'public' => $INPUT->bool('public'),
+                ], $user);
+                break;
+            case 'lobby_delete': {
+                $row = $lb->get($INPUT->int('id'));
+                if (!$row || $row['event_pid'] !== $pid) {
+                    $err = $lb->getLang('error');
+                    break;
+                }
+                $lb->delete((int)$row['id']);
+                $err = '';
+                break;
+            }
+            case 'lobby_assign':
+                $err = $lb->assign($pid, $INPUT->int('id'), $INPUT->str('user'), $INPUT->bool('add'));
+                break;
+            case 'event_mod':
+                if (!$lb->isHost($pid, $user)) {
+                    http_status(403);
+                    return ['error' => $lb->getLang('lm_host_only')];
+                }
+                $err = $lb->setMod($pid, $INPUT->str('user'), $INPUT->bool('add'));
                 break;
             default:
                 http_status(404);
                 return ['error' => 'unknown fn'];
         }
-        return $err === '' ? ['ok' => true] : ['error' => $err];
+        if ($err === '') {
+            $lb->syncPages($pid);
+            return ['ok' => true];
+        }
+        return ['error' => $err];
     }
 
     /**
