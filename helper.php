@@ -92,13 +92,18 @@ class helper_plugin_wikilan extends Plugin
      */
     public function resolveLogin(string $name): string
     {
-        if ($this->userData($name)) return $name;
-        $known = array_merge(
-            $this->getDB()->queryAll("SELECT DISTINCT user FROM lan_attendees"),
-            $this->getDB()->queryAll("SELECT user FROM steam_links")
-        );
-        foreach ($known as $r) {
-            if (mb_strtolower($r['user']) === mb_strtolower($name)) return $r['user'];
+        // canonical spellings recorded at real logins take precedence: LDAP
+        // accepts lowercased logins (page ids are cleanID-lowercased), which
+        // would otherwise mask the real case used in the plugin tables
+        $known = array_column($this->getDB()->queryAll(
+            "SELECT user FROM lan_attendees
+              UNION SELECT user FROM steam_links
+              UNION SELECT user FROM discord_links
+              UNION SELECT user FROM event_signups"
+        ), 'user');
+        if (in_array($name, $known, true)) return $name;
+        foreach ($known as $u) {
+            if (mb_strtolower($u) === mb_strtolower($name)) return $u;
         }
         return $name;
     }
