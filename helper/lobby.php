@@ -354,16 +354,19 @@ class helper_plugin_wikilan_lobby extends Plugin
                 }
             }
 
-            // one row of boxes per round: each lobby/match is a small table,
-            // laid out side by side by CSS; advancers are bold + ✓
+            // one centered card row per round: each lobby/match is a small
+            // table in its own card; advancers are bold + ✓
             foreach ($th->rounds($t) as $round => $groups) {
-                $out .= '==== ' . sprintf($L['t_round'], $round) . " ====\n\n";
+                $out .= '==== ' . sprintf($L['t_round'], $round) . " ====\n";
+                $out .= "<WRAP cardgrid center>\n";
                 foreach ($groups as $g) {
+                    $out .= "<WRAP>\n";
                     $out .= $t['mode'] === 'teams'
                         ? $this->teamTable($L, $g)
                         : $this->ffaTable($L, $t, $g, count($groups) === 1);
-                    $out .= "\n";
+                    $out .= "</WRAP>\n";
                 }
+                $out .= "</WRAP>\n\n";
             }
         }
         return rtrim($out);

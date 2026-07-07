@@ -408,7 +408,7 @@ ul.wl-t-slots .wl-user-avatar { width: 24px; height: 24px; }
 .wl-t-conn input:not([type=checkbox]) { flex: 1 1 7em; min-width: 6em; }
 
 /* bracket look for the materialized tournament tables: each lobby/match
- * table becomes a box, boxes flow into one row per round heading */
+ * table becomes a box, one <WRAP cardgrid center> row per round */
 .wl-lobbies-body div.table {
     display: inline-block;
     vertical-align: top;
@@ -417,6 +417,13 @@ ul.wl-t-slots .wl-user-avatar { width: 24px; height: 24px; }
     border-radius: 6px;
     background: var(--background_alt, __background_alt__);
     padding: 0.15em 0.45em 0.3em;
+}
+/* inside the card grid the gap does the spacing and the box fills its cell */
+.wl-lobbies-body .wrap_cardgrid div.table {
+    display: block;
+    margin: 0;
+    height: 100%;
+    box-sizing: border-box;
 }
 .wl-lobbies-body div.table table { border: none; margin: 0; }
 .wl-lobbies-body div.table th,
