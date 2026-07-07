@@ -153,6 +153,8 @@ class helper_plugin_wikilan_discord extends Plugin
         if ($token === '') return null;
         $http = new DokuHTTPClient();
         $http->timeout = 15;
+        // Discord's edge rejects non-compliant user agents with 40333
+        $http->agent = 'DiscordBot (https://github.com/Maesto/wikilan, 1.0)';
         $http->headers['Authorization'] = 'Bot ' . $token;
         $http->headers['Content-Type'] = 'application/json';
         $ok = $http->sendRequest(

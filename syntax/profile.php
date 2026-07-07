@@ -107,7 +107,7 @@ class syntax_plugin_wikilan_profile extends SyntaxPlugin
         }
         if ($discord) {
             $label = $own
-                ? sprintf($wl->getLang('discord_linked_as'), $dc->displayName($discord))
+                ? $wl->getLang('discord_view_profile')
                 : $wl->getLang('discord_add_friend');
             $links[] = '<a class="wl-discord-deeplink" href="https://discord.com/users/'
                 . hsc($discord['discord_id']) . '" target="_blank" rel="noopener">'
