@@ -173,9 +173,20 @@ class action_plugin_wikilan_manage extends ActionPlugin
         }
         echo '</p>';
         if ($isHost) {
-            echo '<p><input class="wl-lm-moduser" placeholder="'
-                . hsc($this->lb->getLang('t_orga_ph')) . '">'
-                . '<button class="wl-lm-modadd">+</button></p>';
+            global $auth;
+            $options = [];
+            foreach (($auth ? $auth->retrieveUsers(0, 0) : []) as $login => $info) {
+                if (in_array($login, $mods, true)) continue;
+                $options[$login] = $info['name'] ?: $login;
+            }
+            asort($options, SORT_FLAG_CASE | SORT_STRING);
+            echo '<p><select class="wl-lm-moduser"><option value="">'
+                . hsc($this->lb->getLang('t_orga_ph')) . '</option>';
+            foreach ($options as $login => $name) {
+                echo '<option value="' . hsc($login) . '">' . hsc($name)
+                    . ($name !== $login ? ' (' . hsc($login) . ')' : '') . '</option>';
+            }
+            echo '</select><button class="wl-lm-modadd">+</button></p>';
         }
     }
 

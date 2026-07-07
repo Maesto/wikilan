@@ -252,7 +252,7 @@ a.wl-user, a.wl-user:hover { text-decoration: none; }
 
 .wl-tourney { margin: 1em 0; }
 .wl-t-meta { font-weight: bold; margin-bottom: 0.2em; }
-.wl-t-orgas { color: __text_neu__; font-size: 90%; margin-top: 0; }
+.wl-t-orgas { color: var(--text_neu, __text_neu__); font-size: 90%; margin-top: 0; }
 .wl-t-orgas .wl-t-orgadel { margin-left: 0.15em; }
 
 .wl-t-rounds {
@@ -270,9 +270,9 @@ a.wl-user, a.wl-user:hover { text-decoration: none; }
 .wl-t-round h4 { margin: 0 0 0.4em; }
 
 .wl-t-group {
-    border: 1px solid __border__;
+    border: 1px solid var(--border, __border__);
     border-radius: 6px;
-    background: __background_alt__;
+    background: var(--background_alt, __background_alt__);
     padding: 0.5em 0.7em;
     margin-bottom: 0.8em;
 }
@@ -308,7 +308,7 @@ ul.wl-t-slots .wl-user-avatar { width: 24px; height: 24px; }
 .wl-t-addrow { display: flex; gap: 0.3em; margin-top: 0.4em; }
 .wl-t-addrow .wl-t-adduser { flex: 1 1 auto; min-width: 0; }
 
-.wl-t-team { border-left: 3px solid __border__; padding-left: 0.5em; margin: 0.3em 0; }
+.wl-t-team { border-left: 3px solid var(--border, __border__); padding-left: 0.5em; margin: 0.3em 0; }
 .wl-t-team.wl-t-won { border-left-color: #4a4; }
 .wl-t-winmark { color: #4a4; font-weight: bold; }
 
@@ -319,17 +319,17 @@ ul.wl-t-slots .wl-user-avatar { width: 24px; height: 24px; }
     align-items: center;
     margin-top: 0.6em;
     padding-top: 0.5em;
-    border-top: 1px dashed __border__;
+    border-top: 1px dashed var(--border, __border__);
 }
 .wl-t-controls .wl-t-delete { margin-left: auto; color: #b33; }
 .wl-t-orgactl { display: inline-flex; gap: 0.2em; }
 
 .wl-t-podium {
-    border: 1px solid __border__;
+    border: 1px solid var(--border, __border__);
     border-radius: 6px;
     padding: 0.6em 0.9em;
     margin: 0.5em 0 1em;
-    background: __background_alt__;
+    background: var(--background_alt, __background_alt__);
 }
 .wl-t-champion { font-size: 115%; font-weight: bold; margin: 0 0 0.3em; }
 .wl-t-medal { font-size: 130%; margin-right: 0.3em; }
@@ -339,14 +339,14 @@ ul.wl-t-slots .wl-user-avatar { width: 24px; height: 24px; }
 
 .wl-connect { display: inline-flex; align-items: center; gap: 0.25em; margin-left: 0.4em; }
 .wl-connect .wl-code {
-    background: __background_alt__;
-    border: 1px dashed __border__;
+    background: var(--background_alt, __background_alt__);
+    border: 1px dashed var(--border, __border__);
     border-radius: 4px;
     padding: 0 0.35em;
     letter-spacing: 0.05em;
 }
 .wl-connect .wl-copy {
-    border: 1px solid __border__;
+    border: 1px solid var(--border, __border__);
     border-radius: 4px;
     background: none;
     cursor: pointer;
@@ -362,11 +362,11 @@ ul.wl-t-slots .wl-user-avatar { width: 24px; height: 24px; }
 .wl-lm-mod, .wl-lm-player {
     display: inline-flex;
     align-items: center;
-    border: 1px solid __border__;
+    border: 1px solid var(--border, __border__);
     border-radius: 12px;
     padding: 0.05em 0.5em;
     margin: 0 0.2em 0.2em 0;
-    background: __background_alt__;
+    background: var(--background_alt, __background_alt__);
 }
 .wl-lm-moddel, .wl-lm-punassign {
     border: none;
@@ -381,9 +381,9 @@ ul.wl-t-slots .wl-user-avatar { width: 24px; height: 24px; }
     flex: 1 1 20em;
     min-width: 18em;
     max-width: 28em;
-    border: 1px solid __border__;
+    border: 1px solid var(--border, __border__);
     border-radius: 6px;
-    background: __background_alt__;
+    background: var(--background_alt, __background_alt__);
     padding: 0.6em 0.9em;
 }
 .wl-lm-lobby h4 { margin: 0 0 0.4em; }
@@ -403,6 +403,6 @@ ul.wl-t-slots .wl-user-avatar { width: 24px; height: 24px; }
     align-items: center;
     margin-top: 0.4em;
     padding-top: 0.4em;
-    border-top: 1px dotted __border__;
+    border-top: 1px dotted var(--border, __border__);
 }
 .wl-t-conn input:not([type=checkbox]) { flex: 1 1 7em; min-width: 6em; }
