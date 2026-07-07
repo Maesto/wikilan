@@ -6,11 +6,13 @@ use dokuwiki\Extension\Event;
 
 /**
  * No-markup profile page creation: when a logged-in user views their own,
- * not-yet-existing profile page (…:msl:users:<login>), a plain HTML form
- * (about me / clan / games / hardware) replaces the "create this page" dead
- * end. Submitting builds the wiki text (heading + ~~LAN:profile~~ + one
- * section per filled field) and saves it — the page stays normally editable
- * afterwards for people who do know their way around.
+ * not-yet-existing profile page (…:msl:users:<login>) — or the bare
+ * skeleton auto-created on LAN signup (helper::ensureProfilePages) — a
+ * plain HTML form (about me / clan / games / hardware) replaces the
+ * "create this page" dead end. Submitting builds the wiki text (heading +
+ * ~~LAN:profile~~ + one section per filled field) for EVERY language
+ * variant (localized section headings) and saves them — the pages stay
+ * normally editable afterwards for people who do know their way around.
  */
 class action_plugin_wikilan_profilecreate extends ActionPlugin
 {
@@ -28,14 +30,25 @@ class action_plugin_wikilan_profilecreate extends ActionPlugin
         return $wl->neutralId($id) === cleanID('msl:users:' . $user);
     }
 
+    /** page content is (still) just the auto-created heading + profile card */
+    protected function isSkeleton(string $id): bool
+    {
+        if (!page_exists($id)) return true;
+        return (bool)preg_match(
+            '/^====== .+ ======\s*~~LAN:profile~~$/s',
+            trim(rawWiki($id))
+        );
+    }
+
     public function showForm(Event $event, $param)
     {
         global $ID, $INFO;
-        if ($event->data !== 'show' || !empty($INFO['exists'])) return;
+        if ($event->data !== 'show') return;
         /** @var helper_plugin_wikilan $wl */
         $wl = plugin_load('helper', 'wikilan');
         if (!$this->ownProfilePage($wl, $ID)) return;
-        if (auth_quickaclcheck($ID) < AUTH_CREATE) return;
+        if (!$this->isSkeleton($ID)) return;
+        if (auth_quickaclcheck($ID) < (empty($INFO['exists']) ? AUTH_CREATE : AUTH_EDIT)) return;
 
         $fields = [
             ['about', 'textarea'],
@@ -73,21 +86,32 @@ class action_plugin_wikilan_profilecreate extends ActionPlugin
         $wl = plugin_load('helper', 'wikilan');
         if (
             !$this->ownProfilePage($wl, $ID)
-            || page_exists($ID)
-            || auth_quickaclcheck($ID) < AUTH_CREATE
+            || !$this->isSkeleton($ID)
+            || auth_quickaclcheck($ID) < (page_exists($ID) ? AUTH_EDIT : AUTH_CREATE)
             || !checkSecurityToken()
         ) {
             $event->data = 'show';
             return;
         }
 
-        $text = '====== ' . $wl->userName($wl->user()) . " ======\n\n~~LAN:profile~~\n";
-        foreach (['about', 'clan', 'games', 'hardware'] as $key) {
-            $v = trim($INPUT->str('wl_' . $key));
-            if ($v === '') continue;
-            $text .= "\n===== " . $wl->getLang('profile_f_' . $key) . " =====\n\n$v\n";
+        // one page per language, section headings localized; the free-text
+        // content itself is written once and shared between the variants
+        /** @var helper_plugin_wikilan_lobby $lb */
+        $lb = plugin_load('helper', 'wikilan_lobby');
+        $neutral = $wl->neutralId($ID);
+        foreach ($wl->languages() ?: [''] as $lang) {
+            $L = $lb->langFor($lang ?: 'en');
+            $text = '====== ' . $wl->userName($wl->user()) . " ======\n\n~~LAN:profile~~\n";
+            foreach (['about', 'clan', 'games', 'hardware'] as $key) {
+                $v = trim($INPUT->str('wl_' . $key));
+                if ($v === '') continue;
+                $text .= "\n===== " . $L['profile_f_' . $key] . " =====\n\n$v\n";
+            }
+            $pid = $wl->localId($neutral, $lang);
+            // only fill variants that are still untouched skeletons
+            if ($pid !== $ID && !$this->isSkeleton($pid)) continue;
+            saveWikiText($pid, $text, $wl->getLang('profile_create_summary'));
         }
-        saveWikiText($ID, $text, $wl->getLang('profile_create_summary'));
         send_redirect(wl($ID, [], true, '&'));
     }
 }

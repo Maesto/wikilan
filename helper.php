@@ -378,6 +378,7 @@ class helper_plugin_wikilan extends Plugin
                 $user,
                 time()
             );
+            $this->ensureProfilePages($user);
         } else {
             $this->getDB()->exec(
                 "DELETE FROM lan_attendees WHERE lan_id = ? AND user = ?",
@@ -390,6 +391,22 @@ class helper_plugin_wikilan extends Plugin
                 $lanId,
                 $user
             );
+        }
+    }
+
+    /**
+     * Create bare profile pages (heading + profile card) in every language
+     * for a user who doesn't have them yet — the guided creation form
+     * (action/profilecreate.php) still offers to fill such skeletons.
+     */
+    public function ensureProfilePages(string $user): void
+    {
+        $neutral = cleanID('msl:users:' . $user);
+        $skeleton = '====== ' . $this->userName($user) . " ======\n\n~~LAN:profile~~\n";
+        foreach ($this->languages() ?: [''] as $l) {
+            $pid = $this->localId($neutral, $l);
+            if (page_exists($pid)) continue;
+            saveWikiText($pid, $skeleton, $this->getLang('profile_create_summary'));
         }
     }
 
