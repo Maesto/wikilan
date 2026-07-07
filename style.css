@@ -440,3 +440,15 @@ ul.wl-t-slots .wl-user-avatar { width: 24px; height: 24px; }
 .dokuwiki .wrap_cardgrid div.table td strong {
     color: var(--existing, #390);
 }
+
+/* ---------------------------------------------------------- linked accounts */
+.wl-accounts-grid { display: flex; flex-wrap: wrap; gap: 1em; align-items: flex-start; }
+.wl-account-card {
+    flex: 1 1 22em;
+    max-width: 30em;
+    border: 1px solid var(--border, __border__);
+    border-radius: 6px;
+    background: var(--background_alt, __background_alt__);
+    padding: 0.6em 1em;
+}
+.wl-account-card h3 { margin-top: 0.2em; }

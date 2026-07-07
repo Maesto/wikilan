@@ -102,7 +102,7 @@ class syntax_plugin_wikilan_profile extends SyntaxPlugin
             }
         } elseif ($own) {
             $links[] = '<a class="wl-steam-deeplink" href="'
-                . wl($ID, ['do' => 'wikilan_steam'], false, '&amp;') . '">'
+                . wl($ID, ['do' => 'wikilan_accounts'], false, '&amp;') . '">'
                 . hsc($wl->getLang('steam_link')) . '</a>';
         }
         if ($discord) {
@@ -114,7 +114,7 @@ class syntax_plugin_wikilan_profile extends SyntaxPlugin
                 . hsc($label) . '</a>';
         } elseif ($own) {
             $links[] = '<a class="wl-discord-deeplink" href="'
-                . wl($ID, ['do' => 'wikilan_discord'], false, '&amp;') . '">'
+                . wl($ID, ['do' => 'wikilan_accounts'], false, '&amp;') . '">'
                 . hsc($wl->getLang('discord_link')) . '</a>';
         }
         if ($links) {

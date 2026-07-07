@@ -222,3 +222,7 @@ $lang['discord_notify_enable']  = 'Benachrichtigungen per Discord senden';
 $lang['discord_notify_disable'] = 'Wieder Browser-Push nutzen';
 $lang['discord_notify_on_msg']  = 'Benachrichtigungen kommen ab jetzt als Discord-DM.';
 $lang['discord_notify_off_msg'] = 'Benachrichtigungen nutzen wieder Browser-Push.';
+
+// Verknüpfte Konten
+$lang['accounts_title'] = 'Verknüpfte Konten';
+$lang['accounts_intro'] = 'Verbinde externe Accounts mit deinem Wiki-Login.';

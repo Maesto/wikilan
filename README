@@ -40,7 +40,8 @@ lib/plugins/wikilan/ and running the install CLI command below.
                                 all-time (limit=, alltime=0, user= for a
                                 one-line personal summary)
 
-?do=wikilan_discord (User Tools → Discord) links a Discord account via
+?do=wikilan_accounts (User Tools → Linked accounts) collects all external
+account links, one card per provider. Steam links via OpenID; Discord via
 OAuth2 (identify scope; register <site>/doku.php?do=wikilan_discordcb as
 the app's redirect). Linked users get an "Add on Discord" button on their
 profile and can opt to receive notifications as Discord DMs from the

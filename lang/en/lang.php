@@ -231,3 +231,7 @@ $lang['discord_notify_enable']  = 'Send notifications via Discord';
 $lang['discord_notify_disable'] = 'Use browser push again';
 $lang['discord_notify_on_msg']  = 'Notifications will be sent as Discord DMs.';
 $lang['discord_notify_off_msg'] = 'Notifications will use browser push again.';
+
+// linked accounts page
+$lang['accounts_title'] = 'Linked accounts';
+$lang['accounts_intro'] = 'Connect external accounts to your wiki login.';
