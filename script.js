@@ -720,7 +720,9 @@
             var page = box.dataset.page;
 
             function fillConnect(map) {
-                box.querySelectorAll('.wl-connect').forEach(function (span) {
+                // the generated block isn't wrapped (see syntax/lobbies.php),
+                // so connect slots are located document-wide
+                document.querySelectorAll('.wl-connect').forEach(function (span) {
                     var d = map[span.dataset.lobby];
                     var code = span.querySelector('.wl-code');
                     var copy = span.querySelector('.wl-copy');
@@ -749,14 +751,18 @@
             }
 
             function poll() {
-                ajax('lobby_block', { event: ev, page: page, hash: box.dataset.hash || '' })
+                ajax('lobby_block', { event: ev, page: page })
                     .then(function (res) {
                         if (res.error) return;
-                        if (res.html !== undefined) {
-                            box.querySelector('.wl-lobbies-body').innerHTML = res.html;
-                            box.dataset.hash = res.hash;
-                        }
                         fillConnect(res.connect || {});
+                        // block content changed (results, new lobbies, moves):
+                        // reload for a clean server render — DOM patching across
+                        // the section structure isn't reliable
+                        if (res.hash && box.dataset.hash && res.hash !== box.dataset.hash
+                            && !document.hidden) {
+                            box.dataset.hash = res.hash;
+                            location.reload();
+                        }
                     });
             }
 

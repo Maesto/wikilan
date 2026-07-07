@@ -115,8 +115,8 @@ class action_plugin_wikilan_ajax extends ActionPlugin
                 return ['users' => $out];
 
             case 'lobby_block': {
-                // per-viewer connect info + live refresh of the managed block:
-                // html only travels when the client's hash is stale
+                // per-viewer connect info + content hash; a hash change makes
+                // the client reload for a clean server render
                 if ($user === '') {
                     http_status(403);
                     return ['error' => $wl->getLang('login_required')];
@@ -125,17 +125,10 @@ class action_plugin_wikilan_ajax extends ActionPlugin
                 $lb = plugin_load('helper', 'wikilan_lobby');
                 $pid = $wl->neutralId($INPUT->str('event'));
                 $lang = $wl->pageLang($INPUT->str('page'));
-                $markup = $lb->markup($pid, $lang);
-                $hash = md5($markup);
-                $out = [
-                    'hash' => $hash,
+                return [
+                    'hash' => md5($lb->markup($pid, $lang)),
                     'connect' => $lb->connectFor($pid, $user),
                 ];
-                if ($INPUT->str('hash') !== $hash) {
-                    $info = [];
-                    $out['html'] = p_render('xhtml', p_get_instructions($markup), $info);
-                }
-                return $out;
             }
         }
 

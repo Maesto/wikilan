@@ -409,7 +409,7 @@ ul.wl-t-slots .wl-user-avatar { width: 24px; height: 24px; }
 
 /* bracket look for the materialized tournament tables: each lobby/match
  * table becomes a box, one <WRAP cardgrid center> row per round */
-.wl-lobbies-body div.table {
+.dokuwiki .wrap_cardgrid div.table {
     display: inline-block;
     vertical-align: top;
     margin: 0 0.9em 0.9em 0;
@@ -419,24 +419,24 @@ ul.wl-t-slots .wl-user-avatar { width: 24px; height: 24px; }
     padding: 0.15em 0.45em 0.3em;
 }
 /* inside the card grid the gap does the spacing and the box fills its cell */
-.wl-lobbies-body .wrap_cardgrid div.table {
+.dokuwiki .wrap_cardgrid div.table {
     display: block;
     margin: 0;
     height: 100%;
     box-sizing: border-box;
 }
-.wl-lobbies-body div.table table { border: none; margin: 0; }
-.wl-lobbies-body div.table th,
-.wl-lobbies-body div.table td {
+.dokuwiki .wrap_cardgrid div.table table { border: none; margin: 0; }
+.dokuwiki .wrap_cardgrid div.table th,
+.dokuwiki .wrap_cardgrid div.table td {
     border: none;
     background: transparent;
     padding: 0.15em 0.6em;
 }
-.wl-lobbies-body div.table th {
+.dokuwiki .wrap_cardgrid div.table th {
     border-bottom: 1px solid var(--border, __border__);
     text-align: center;
 }
 /* advancing players / winning team members (bold in the generated markup) */
-.wl-lobbies-body div.table td strong {
+.dokuwiki .wrap_cardgrid div.table td strong {
     color: var(--existing, #390);
 }

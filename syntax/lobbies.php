@@ -7,10 +7,13 @@ use dokuwiki\Extension\SyntaxPlugin;
  *
  * The wiki text between the markers is GENERATED (lobby list + bracket
  * state, see helper/lobby.php::syncPages) and rendered like any other wiki
- * content — nothing on the page requires JS. The markers themselves render
- * the wrapper div (with a manage deep-link for hosts/moderators) that the
- * live-refresh script re-fills while the event's LAN is live; lobby codes
- * are filled into ~~LAN:connect~~ placeholders by the same script.
+ * content — nothing on the page requires JS. The start marker renders a
+ * small, self-contained head element (manage deep-link + data attributes
+ * for the live-refresh script); it deliberately does NOT open a wrapper
+ * div around the block: the generated headings make DokuWiki close/open
+ * its section divs in between, and a div spanning them turns into tag
+ * soup the browser "repairs" unpredictably. Content changes while live
+ * therefore reload the page; only connect info is patched in place.
  */
 class syntax_plugin_wikilan_lobbies extends SyntaxPlugin
 {
@@ -34,10 +37,7 @@ class syntax_plugin_wikilan_lobbies extends SyntaxPlugin
         if ($format !== 'xhtml') return false;
         global $ID;
 
-        if (!empty($data['end'])) {
-            $renderer->doc .= '</div></div>';
-            return true;
-        }
+        if (!empty($data['end'])) return true;
 
         /** @var helper_plugin_wikilan $wl */
         $wl = plugin_load('helper', 'wikilan');
@@ -60,7 +60,7 @@ class syntax_plugin_wikilan_lobbies extends SyntaxPlugin
                 . wl($id, ['do' => 'wikilan_manage', 'event' => $pid]) . '">🛠 '
                 . hsc($lb->getLang('lm_manage_link')) . '</a></p>';
         }
-        $renderer->doc .= '<div class="wl-lobbies-body">';
+        $renderer->doc .= '</div>';
         return true;
     }
 }
